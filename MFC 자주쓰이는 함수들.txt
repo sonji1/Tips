@@ -1,0 +1,1826 @@
+자주 쓰이는 녀석들조회 수 18847 추천 수 0 2009.03.30 21:07:13
+연필*.200.86.64http://www.yunpil.net/1605
+1. DC얻기
+CClientDC dc(this);
+ 
+
+2. Client 영역 구하기
+GetClientRect(&rect);
+WM_SIZE 메시지발생후 cx,cy 사용
+ 
+
+3. 문자열 사각형안에 그리기
+pDC->DrawText(문자열,사각형,Style);
+Style: DT_BOTTOM - 문자열을 사각형 맨아래줄에배열 반드시 DT_SINGLELINE과 함께사용
+DT_CENTER - 문자열을 가로중앙에 배치
+DT_VCENTER - 문자열을 세로중앙에 배치
+DT_LEFT,RIGHT - 문자열을 좌,우로 배치
+DT_SINGLELINE - 문자열을 한줄로만 쓴다
+ 
+
+4. Brush 사용법
+CBrush brushname(RGB(red,green,blue)); //브러쉬 생성
+CBrush *oldBrush=pDC->SelectObject(&brushname); //이전Brush 저장, 새로운 Brush 선택
+pDC->SelectObject(oldBrush); //원래의 브러쉬로 반환
+ 
+
+5. Pen사용법
+CPen pen(Pen Style,RGB(red,green,blue)); //브러쉬생성
+//Style: PS_SOLID,PS_DASH,PS_DOT,PS_DASHDOT,PS_GEOMETRIC,PS_COSMETRIC - 펜종류
+PS_ENDCAP_ROUND,PS_ENDCAP_SQUARE - 펜끝을 둥글게,각지게 설정
+CPen *oldPen=pDC->SelectObject(&pen); //이전Pen저장, 새로운 Pen설정
+pDC->SelectObject(oldPen); //펜반환
+ 
+
+6. 화면다시그리기
+View Class에서 - Invalidate(TRUE) : 화면을 지우고다시그린다
+Invalidate(FALSE) : 화면을 덮어씌운다
+UpdateAllViews(NULL); // Doc Class에서 View 의 OnDraw 호출
+RedrawWindow();
+ 
+
+7. 메시지,함수 수동으로 넣기 (EX)버튼클릭함수넣기
+헤더파일의 AFX_MSG_MAP 부분에 함수를 정의
+EX) afx_msg void funcName();
+.cpp파일의 AFX_MSG 부분에 메시지를 추가한다
+EX) ON_BN_CLICKED(ID_NAME,funcName)...
+ID 등록: View 메뉴의 Resource Symbol 에 들어가서 메뉴 ID 를 등록해준다..
+.cpp파일의 맨아래에서 함수를 정의한다
+EX) void CClass::funcName() { ... }
+ 
+
+8. 마우스커서 바꾸기
+리소스탭에서 커서를 그리고 저장한뒤 ID값은 준다음
+SetCapture(); //커서의입력을 클라이언트영역을 벗어나더라도 받아낸다
+SetCursor(AfxGetApp()->LoadCursor(nIDResource));
+//APP클래스의 LoadCursor View의 SetCursor 사용
+ReleaseCapture(); //SetCursor()상태를 해제한다
+ 
+
+9. 색상표 사용하기
+CColorDialog dlg;
+if(dlg.DoModal()==IDOK) //Dialog 를 띄운후 OK버튼을누르면 실행할부분
+MemberFunc: GetColor() //선택된 색상을 받아온다 return 형은 COLORREF 형
+ 
+
+10. 팝업메뉴 만들기
+CMenu menu; //메뉴 객체생성
+CMenu *pmenu; //메뉴 포인터생성
+menu.LoadMenu(IDR_MAINFRAME); //메뉴를 불러온다
+pmenu=menu.GetSubMenu(3); //메뉴의 3번째 메뉴를 가져온다
+menu.CheckMenuItem(ID_MENU,m_kind==ID_MENU ? MF_CHECKED : MF_UNCHECKED);
+//메뉴 체크하기 (메뉴 ID, ID 체크조건)
+pmenu->TrackPopupMenu(TPM_LEFTALIGN,point.x,point.y,this) //(TMP_Style,x좌표,y좌표,hWnd) 메뉴 띄우기
+ 
+
+*주의사항*
+[안내]태그제한으로등록되지않습니다-OnContextMenu(CWnd* pWnd, CPoint point) //여기서 point 는 스크린 기준이고,
+OnRButtonDown(UINT nFlags, CPoint point) //여기서 point 는 클라이언트 기준이다!
+ 
+
+11. 클라이언트 포인터를 스크린 포인터로 변경
+ClientToScreen(&point);
+ 
+
+12. 그림판기능
+if(m_flag==FALSE) return; //m_falg=그리기 기능 참,거짓설정 그리기 아니면 빠져나간다
+CClientDC dc(this);
+CPen myPen(PS_SOLID,m_width,m_color);
+CPen *pOldPen=dc.SelectObject(&myPen);
+switch(m_shape)
+{
+case ID_FREELINE: //자유선그리기
+dc.MoveTo(m_oldpt.x,m_oldpt.y); //지난포인터부터
+dc.LineTo(point.x,point.y); //새포인터까지 그린다
+break;
+case ID_RECT: //사각형그리기
+dc.SetROP2(R2_NOTXORPEN);
+dc.Rectangle(m_spt.x,m_spt.y,m_oldpt.x,m_oldpt.y); //지워지는 효과
+dc.Rectangle(m_spt.x,m_spt.y,point.x,point.y); //그려지는 효과
+break;
+case ID_ELLIPSE: //원그리기
+dc.SetROP2(R2_NOTXORPEN);
+dc.Ellipse(m_spt.x,m_spt.y,m_oldpt.x,m_oldpt.y); //지워지는 효과
+dc.Ellipse(m_spt.x,m_spt.y,point.x,point.y); //그려지는 효과
+break;
+case ID_LINE: //선그리기
+dc.SetROP2(R2_NOTXORPEN);
+dc.MoveTo(m_spt.x,m_spt.y); //시작점부터
+dc.LineTo(m_oldpt.x,m_oldpt.y); //지난점까지 그은선을 지운다
+dc.MoveTo(m_spt.x,m_spt.y); //시작점부터
+dc.LineTo(point.x,point.y); //새로운점까지 그린다
+break;
+}
+m_oldpt=point; //바로이전값 보관
+dc.SelectObject(pOldPen); //펜 반환
+
+13. MessageBox
+AfxMessageBox() -> 전역함수를 이용하영 메세지 박스를 출력한다. //어디서든지 사용할수 잇다
+int CWnd::MessageBox("메세지","창제목","아이콘|버튼(상수값)"); //View클래스에서 사용한다
+아이콘 상수값 MB_IC[안내]태그제한으로등록되지않습니다-xxONERROR, MB_ICONWARNING, MB_ICONQUESTION,MB_ICONINFOMATION
+MB_SYSTEMMODAL //시스템모달 대화창 닫기전에 다른작업 못함
+MB_APPLMODAL //응용모달
+버튼 상수값 MB_OK, MB_OKCANCEL, MB_YESNO
+ 
+
+14. OS 컨트롤
+ExitWindowEx(EWX_SHUTDOWN,NULL); //Shut Down
+ExitWindowsEx(EWX_FORCE,0); //강제종료
+ExitWindowsEx(EWX_LOGOFF,0); //로그오프
+ExitWindowsEx(EWX_POWEROFF,0); //Shut Down -> Turn Off
+ExitWindowsEx(EWX_REBOOT); //Shut Down -> Reboot
+ 
+
+15. DialogBox 메시지 교환
+UpdateData(FALSE); // 컨트롤에 멤버변수의 내용을 표시해준다
+UpdateData(TRUE); // 컨트롤 내용을 다이얼로그 클래스의 멤버변수로 저장
+ 
+
+16. 자료변환
+atoi,itoa - int <=> ASCII(char) 변환
+str.Format(" %d %d",x,y); // int형을 문자열로 변환
+atol,ltoa - ASCII <=> long 변환
+atof - ACSII => float 변환
+fcvt,gcvt - 실수를 text로 변환
+LPtoDP, DPtoLP - 장치좌표 <=> 논리좌표 변환
+ 
+
+17. CEdit Class 사용하기
+CEdit e_str.SetSel(int StartChae, int EndChar); //처음문자부터 마지막까지 블록 지정
+CEdit e_str.GetSel(int SChar,int EChar); //블럭 지정한 처음문자와 마지막문자 받기
+CString str=m_str.Mid(SChar,EChar-SChar); //블럭지정한 부분을 가져온다
+
+18. 컨트롤과 자료교환
+SetDlgItemText(컨트롤 ID,문자열) //컨트롤에 문자열을 넣는다
+GetDlgItemText(컨트롤 ID,문자열) //컨트롤의 내용을 문자열에 넣는다
+GetDlgItem(컨트롤 ID); //컨트롤의 주소를 가져온다
+
+19. 상태바조작
+CMainFrame 생성자 위에
+static UINT indicators[] = //이안에 새로운 ID를 넣고 그 ID의 갱신핸들러를 만든다음 코딩
+pCmdUI->SetText("표시할내용“);
+ 
+
+20. 수동으로 Bitmap 컨트롤 사용하기
+CStatic bitmap; //bitmap 컨트롤변수
+bitmap.SetBitmap(CBitmap m_bitmap); //컨트롤에 비트맵지정
+GetDlgItem(IDC_BITMAP)->ShowWindow(SW_SHOW,HIDE); // 그림을 보이거나 숨긴다.
+ 
+21. 응용프로그램 실행하기
+WinExec("프로그램경로“,SW_SHOW,HIDE); //응용프로그램실행,경로는 \로 구분한다
+ 
+
+22. Bitmap 사용하기
+CBitmap bitmap.LoadBitmap(IDC_BITMAP); //비트맵객체에 비트맵지정
+CDC memDC; //그림그릴 메모리DC생성
+MemDC.CreateCompatibleDC(pDC); //화면 DC와 메모리 DC 호환 생성
+CBitmap *pOldBitmap=MemDC.SelectObject(&m_bitmap); //메모리에 그림을그린다.
+pDC->BitBlt(int x, int y,int Width, int Height, CDC* pSrcDC, int xSrc, int ySrc, DWORD dwRop);
+//BitBlt(그림x좌표,그림y좌표,그림넓이,그림높이,그림그려진메모리DC,그림시작x좌표,그림시작y좌표,스타일);
+pDC->StretchBlt( int x, int y, int nWidth, int nHeight, CDC* pSrcDC, int xSrc, int ySrc, int nSrcWidth, int nSrcHeight, DWORD dwRop )
+//StretchBlt(그림x좌표,그림y좌표,그림넓이,그림높이,그림그려진메모리DC,그림x좌표,그림y좌표,메모리그림넓이,메모리그림높이,스타일);
+MemDC.SelectObject(pOldBitmap); // 메모리DC반환
+ 
+
+23. Font 바꾸기
+CFontDialog dlg; //폰트다이얼로그 생성
+LOGFONT m_logFont; //폰트받을변수선언
+if(dlg.DoModal()==IDOK) //폰트다이얼로그표시
+{dlg.GetCurrentFont(&m_logFont)} //선택된 폰트받기
+OnDraw()
+CFont newFont,*pOldFont; //폰트 객체 만들기
+newFont.CreateFontIndirect(&m_logFont); //폰트 생성
+pOldFont=(CFont *)pDC->SelectObject(&newFont); //폰트 선택
+OnCreate()
+CClientDC dc(this); //DC 생성
+CFont *pFont=dc.GetCurrentFont(); //클라이언트 영역의 폰트를
+pFont->GetLogFont(&m_logFont); //로그폰트 멤버값으로 지정
+ 
+
+24. Font 만들기
+LOGFONT logfont; //폰트를 만든다
+logfont.lfHeight=50; //문자열 높이
+logfont.lfWidth=0; //너비
+logfont.lfEscapement=0; //문자열기울기
+logfont.lfOrientation=0; //문자개별각도
+logfont.lfWeight=FW_NORMAL; //굵기
+logfont.lfItalic=TRUE; //이탤릭
+logfont.lfUnderline=TRUE; //밑줄
+logfont.lfStrikeOut=FALSE; //취소선
+logfont.lfCharSet=HANGUL_CHARSET; //필수
+logfont.lfOutPrecision=OUT_DEFAULT_PRECIS; 
+logfont.lfClipPrecision=CLIP_DEFAULT_PRECIS; //가변폭폰트 고정폭폰트
+logfont.lfPitchAndFamily=DEFAULT_PITCH|FF_SWISS; //글꼴이름
+strcpy(logfont.lfFaceName,"궁서체");
+CClientDC dc(this);
+CFont newFont; //폰트객체생성
+newFont.CreateFontIndirect(&logfont); //폰트지정
+CFont *pOldFont=dc.SelectObject(&newFont); //폰트선택
+dc.TextOut(100,100,m_text);
+dc.SelectObject(pOldFont); //폰트반환
+ 
+
+25. Font 만들기 2
+CFont newFont;
+newFont.CreateFont( int nHeight, int nWidth, int nEscapement, int nOrientation, int nWeight, BYTE bItalic, BYTE bUnderline, BYTE cStrikeOut, BYTE nCharSet, BYTE nOutPrecision, BYTE nClipPrecision, BYTE nQuality, BYTE nPitchAndFamily, LPCTSTR lpszFacename );
+CFont *pOldFont=dc.SelectObject(&newFont);
+ 
+
+26. ComboBox 사용하기
+CComboBox combo; //콤보박스 선언
+combo.Create( DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID );
+//Style - WS_CHILD|WS_VISIBLE
+int n=combo.GetCurSel(); //선택된 아이템의 index를 가져온다
+combo.AddString("문자열"); //문자열을 추가한다
+combo.GetLBText(n,str); //n번째 아이템을 str에 저장
+ 
+
+27. Spin 사용하기
+Spin은 바로앞의 Tab Order에 따라 붙는다
+m_spinr.SetRange(1900,3000); //스핀 범위 지정
+m_spinr.SetPos(m_nYear); //스핀 위치 지정
+ 
+
+28. CTime사용하기
+CTime time; //시간객체생성
+time=CTime::GetCurrentTime(); //현재시간을 저장
+time.GetYear(),time.GetMonth();,time.GetDay(),time.GetHour(),time.GetMinute(),time.GetSecond()
+ 
+
+29. CListBox 메소드
+AddString("문자열"); //리스트에 문자열 추가
+DeleteString(index); //리스트에서 항목 삭제
+GetCount() //전체 항목 갯수를 얻는다.
+GetSelcount() //선택된 항목 갯수 리턴
+GetSel() //선택된 것인지 아닌지를 리턴한다 -> 양수 = TRUE , 음수 => FALSE
+GetText(int index,문자열변수) //index 번째 문자열을 문자열 변수에 넣는다
+FindStringExact(문자열) //지정 문자열의 index 값 리턴 -> 없으면 리턴값 LB_ERR 반환
+FindString("a") //"a"로 시작하는 항목을 모두 찾는다.
+ResetCountent() //모든 내용을 지운다.
+ 
+
+30. 파일입출력
+프로젝트생성시 Step4 => Advanced => 저장파일확장자지정
+.h 파일에 DECLARE_SERIAL(CSawon) //이 클래스를 저장,로드가능한 클래스로 쓰겟다는 선언
+.cpp 파일에 IMPLEMENT_SERIAL(CSawon,CObject,1) //이거를 해야 저장이 가능하다
+void CFileioDoc::Serialize(CArchive& ar)
+if (ar.IsStoring()) //저장하기
+{ar<
+else //열기
+{ar>>m_shape; //불러올걸 쓴다. 읽을때도순서대로읽어야한다}
+ 
+
+31. MicroSoft FlexGrid 사용하기!
+CMSFlexGrid m_Grid; //FlexGrid 컨트롤 변수
+CString strTitle[]={"고객코드","고객성명","고객포인트","신장","몸무게","고객등급","BMT지수","판정결과"};
+
+// Grid 의 제목에 넣을문자배열
+int Width[]={900,900,1100,800,800,900,1000,900};
+
+// Grid 의 열넓이 지정할 배열
+m_Grid.SetRows(m_cnt+2); //전체행수 지정
+m_Grid.SetCols(8); //전체열수 지정
+m_Grid.Clear(); //지우기
+m_Grid.SetFixedCols(0); //고정열은 없다.
+m_Grid.SetRow(0); // 행선택
+
+for(int i=0;i<=7;i++)
+{
+	m_Grid.SetColWidth(i,Width[i]); //열 넓이 설정
+	m_Grid.SetCol(i); //열 선택
+	m_Grid.SetText(strTitle[i]); // 선택된행, 선택된열에 Text 를 넣는다
+}
+ 
+
+32. 4대 Class간 참조
+//각각 헤더파일 include
+#include "MainFrm.h" //메인프레임 헤더파일
+#include "ClassDoc.h" //Doc클래스 헤더파일
+#include "ClassView.h" //View를 include 할때는 반드시 Doc 헤더파일이 위에잇어야한다
+#include "Class.h" //APP Class 의 헤더파일
+ 
+
+void CClassView::OnMenuView() //뷰클래스
+CClassApp *pApp=(CClassApp *)AfxGetApp(); //View -> App
+CMainFrame *pMain=(CMainFrame *)AfxGetMainWnd(); //View -> MainFrm
+CClassDoc *pDoc=(CClassDoc *)pMain->GetActiveDocument(); //View -> MainFrm -> Doc
+CClassDoc *pDoc=(CClassDoc *)GetDocument(); //View -> Doc
+ 
+
+//MainFrame 클래스
+CClassView *pView=(CClassView *)GetActiveView(); //MainFrm -> View
+CClassDoc *pDoc=(CClassDoc *)GetActiveDocument(); //MainFrm -> Doc
+CClassApp *pApp=(CClassApp *)AfxGetApp(); //MainFrm -> App
+ 
+
+//Doc 클래스
+CClassApp *pApp=(CClassApp *)AfxGetApp(); //Doc -> App
+CMainFrame *pMain=(CMainFrame *)AfxGetMainWnd(); //Doc -> MainFrm
+CClassView *pView=(CClassView *)pMain->GetActiveView(); // Doc -> MainFrm -> View
+CClassView *pView=(CClassView *)m_viewList.GetHead(); // Doc -> View
+ 
+
+//App 클래스
+CMainFrame *pMain=(CMainFrame *)AfxGetMainWnd(); //App -> MainFrm
+CClassView *pView=(CClassView *)pMain->GetActiveView(); //App -> MainFrm -> View
+CClassDoc *pDoc=(CClassDoc *)pMain->GetActiveDocument(); //App -> MainFrm -> Doc
+ 
+
+33. ToolBar 추가하기
+CMainFrame 으로 가서 멤버변수 추가
+CToolBar m_wndToolBar1;
+OnCreate 로 가서 다음 내용을 추가해준다 (위의 toolbar 부분을 복사하고 이름만 바꾸면 된다.3군데..)
+if (!m_wndToolBar1.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
+| CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
+!m_wndToolBar1.LoadToolBar(IDR_TOOLBAR1))
+{
+TRACE0("Failed to create toolbarn");
+return -1; // fail to create
+}
+ 
+
+그 함수내에서 //TODO 아래에 내용추가..역시..복사해서 이름만 바꾸면 된다.
+m_wndToolBar1.EnableDocking(CBRS_ALIGN_TOP|CBRS_ALIGN_BOTTOM);
+//DockControlBar(&m_wndToolBar1); <= 이부분 대신..
+이거를 넣는다..
+CRect toolRect; //툴바 영역을 얻을 사각형
+this->RecalcLayout(); //현상태의 Client 영역을 구해서 저장한다
+m_wndToolBar.GetWindowRect(&toolRect); //툴바영역을 저장한다
+toolRect.left+=1; //사각형의 왼쪽을 1Pixel 줄인다
+DockControlBar(&m_wndToolBar1,AFX_IDW_DOCKBAR_TOP,&toolRect); //ToolRect에 툴바를 붙인다
+return 0;
+ 
+
+34. ToolBar에 ComboBox붙이기
+CComboBox m_combo; //객체생성
+	ID 등록 => view 메뉴 => resource symbol => new => ID_COMBO
+oncreate 에 내용 추가 (콤보를 만들고 표시하는 내용)
+
+	m_wndToolBar.SetButtonInfo(10,IDC_COMBO,TBBS_SEPARATOR,150); 
+	//툴바의 10번째버튼을 편집한다
+	CRect itemRect; //콤보를넣을 사각형을 만든다
+	m_wndToolBar.GetItemRect(10,&itemRect); //툴바의 10번째 버튼을 사각형에 넣는다 
+	itemRect.left+=5; //앞여백
+	itemRect.right+=5; //뒤여백
+	itemRect.bottom+=100; //콤보가열릴 공간확보
+	m_combo.Create(WS_CHILD|WS_VISIBLE|CBS_drupDOWN,itemRect,&m_wndToolBar,IDC_COMBO);
+	//콤보박스를 툴바에 붙여준다
+	m_combo.AddString("이름"); //내용추가
+	m_combo.SetCurSel(0); //셀 선택
+ 
+
+35. Toolbar에 수동으로넣은 ComboBox 사용하기
+afx_msg void [안내]태그제한으로등록되지않습니다-xxOnSelectCombo(); //원형
+
+ON_CBN_SELCHANGE(IDC_COMBO,[안내]태그제한으로등록되지않습니다-xxOnSelectCombo) //메세지맵에 추가
+	CMainFrame *pMain=(CMainFrame *)GetParent(); //메인프레임 주소참조
+	CComboBox *pCom=(CComboBox *)(pMain->m_wndToolBar.GetDlgItem(IDC_COMBO));
+	//콤보박스의 주소를 가져온다, 접근할 때 메인프레임 -> 툴바 -> 콤보박스 의 순서로 가야한다
+	int n=pCom->GetCurSel(); //현재선택된 셀의 인덱스를 가져온다
+	if(n==CB_ERR) return; //선택된셀이 없으면 중지한다
+	CString str;
+	pMain->m_combo.GetLBText(n,str); //선택된셀의 Text를 가져온다
+ 
+
+36. UPDATE_COMMAND 사용하기
+pCmdUI->Enable(TRUE); //버튼 활성화
+pCmdUI->SetText((bAdd)?"취소":"신규"); //버튼의 text 설정
+pCmdUI->SetCheck(TRUE); //버튼 체크
+ 
+
+37. 프로그램정보저장
+CWinApp::GetProfileString(섹션명,항목명,기본값); // 함수를 사용한다. (문자열)
+CWinApp::GetProfileInt(섹션명,항목명,기본값); //불러올때사용 (숫자) 
+CWinApp::WriteProfileString(섹션명,항목명,값); //저장할때 사용 (문자열)
+CWinApp::WriteProfileInt(섹션명,항목명,값); //저장할때 사용 (숫자)
+//불러올때 사용할함수
+void CMainFrame::ActivateFrame(int nCmdShow) //프로그램 실행후 프레임생성될때 실행
+//저장할 때 WM_DESTROY 메시지 사용
+ 
+
+38. 컨트롤바 표시하기
+CMainFrame *pMain=(CMainFrame *)GetParent(); //MainFrame 주소가져오기
+pMain->ShowControlBar(&pMain->m_wndToolBar,bTool1,FALSE); //툴바를 bTool2 에따라 보이고 감춘다
+ 
+
+39. Window 창크기,위치정보 저장하기
+MainFrame 의 WM_DESTROY 에
+WINDOWPLACEMENT w;
+this->GetWindowPlacement(&w); //윈도우의 정보를 저장한다.
+CString strRect;
+strRect.Format("%04d,%04d,%04d,%04d", //04d 는 4자리 확보하고 남은건 0으로 채워라
+		w.rcNormalPosition.left,w.rcNormalPosition.top,
+		w.rcNormalPosition.right,w.rcNormalPosition.bottom); //윈도우의 위치,크기 확보..
+
+BOOL bMax,bMin; //윈도우의 상태를 저장하기위한 변수
+//w.falg 는 이전상태의 정보를 가지고 잇다!!
+if(w.showCmd==SW_SHOWMINIMIZED) //최소화 상태
+{
+	bMin=TRUE;
+	if(w.flags==0) //falg 값이 0 이면 이전 상태가 보통상태이다!!
+		bMax=FALSE;
+	else //이전상태가 최대화 상태
+		bMax=TRUE;
+}
+else 
+{
+	if(w.showCmd==SW_SHOWMAXIMIZED) //최대화상태
+	{
+		bMax=TRUE;
+		bMin=FALSE;
+	}
+	else //보통 상태
+	{
+		bMax=FALSE;
+		bMin=FALSE;
+	}
+}
+AfxGetApp()->WriteProfileString("WinStatus","Rect",strRect);
+AfxGetApp()->WriteProfileInt("WinStatus","Max",bMax);
+AfxGetApp()->WriteProfileInt("WinStatus","Min",bMin);
+
+
+//읽어올차례..
+ActivateFrame 함수로 가서
+WINDOWPLACEMENT w; //윈도우의 상태를 저장하는 구조체..
+BOOL bMax,bMin; //최대,최소상태를 저장할 변수
+CString strRect; //창크기를 받아올 변수
+strRect=AfxGetApp()->GetProfileString("WinStatus","Rect","0000,0000,0500,0700");
+bMin=AfxGetApp()->GetProfileInt("WinStatus","Min",FALSE);
+bMax=AfxGetApp()->GetProfileInt("WinStatus","Max",FALSE);
+int a=atoi(strRect.Left(4)); //문자열을 int 로 바꿔준다.
+int b=atoi(strRect.Mid(5,4)); //atoi 아스키 값을 int형으로 바꿔준다..
+int c=atoi(strRect.Mid(10,4));
+int d=atoi(strRect.Mid(15,4));
+w.rcNormalPosition=CRect(a,b,c,d);
+if(bMin)
+{
+	w.showCmd=SW_SHOWMINIMIZED;
+	if(bMax)
+	{
+		w.flags=WPF_RESTORETOMAXIMIZED ;
+	}
+	else
+	{
+		w.flags=0;
+	}
+}
+else
+{
+	if(bMax)
+	{
+		w.showCmd=SW_SHOWMAXIMIZED;
+	}
+	else
+	{
+		w.showCmd=SW_SHOWNORMAL;
+	}
+}
+this->SetWindowPlacement(&w); //설정된 값으로 윈도우를 그리게 한다..
+
+//CFrameWnd::ActivateFrame(nCmdShow); //이건 반드시 주석처리한다..
+ 
+
+40. progress Bar 쓰기
+ 
+
+m_progress.SetRange(m_first,m_last); //Progress 범위설정하기
+m_progress.SetStep(m_step); //Progress Step설정하기
+//m_progress.StepIt(); //스텝만큼 움직이기
+//또는 다음을 사용한다
+for(int a=m_first;a<=m_last;a+=m_step) //a가 처음부터 끝까지
+{
+	m_progress.SetPos(a); // 위치를 a에 맞춘다
+	Sleep(50); //천천히 움직이게한다
+}
+ 
+
+41. 파일대화상자 FileDialog 사용하기
+void CConDlg1::OnFileopen() //파일열기 버튼
+{
+	CFileDialog *fdlg; //파일대화상자 객체 생성 // 포인터로 만든다..
+	static char BASED_CODE szFilter[] = "Animate Video Files (*.avi)|*.avi|All Files (*.*)|*.*||";
+	//필터를 만들어 준다..이건 할줄 모름..
+	fdlg =new CFileDialog(TRUE, ".avi", NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,szFilter);
+	//대화상자 만들기..이렇게 해야댄다..
+	if(fdlg->DoModal()==IDOK) //이제..대화상자를 띠우고.. 
+	{ //OK 누르면 실행될 부분..
+		m_filename=fdlg->GetPathName(); //대화상자에서 경로를 받아서 저장.
+		UpdateData(FALSE); 
+	}
+}
+선생님이 해준거 //파일 다이얼로그 만들기
+CFileDialog fdlg(TRUE,"avi",".avi",OFN_OEVRWRITEPROMPT,"Vidoe Files(*.avi)|*.avi|All Files(*.*)|*.*||");
+ 
+
+42. Animate Control 사용하기
+m_animate.Open(m_filename); //파일을 연다
+m_animate.Play(0,-1,1); //(처음프레임,마지막프레임,반복횟수)
+m_animate.Stop(); //정지시키기
+m_ani.SetAutoStart(TRUE); //자동으로 시작한다
+43. Control 의 Style 바꿔주기
+Control.ModyfyStyle(제거할스타일,추가할스타일); //스타일은 MSDN내용 참조
+ 
+
+44. 시스템 날자바꾸기 버튼
+//SetSystemTime(),GetSystemTime() //GMT 표준시를 가져온다.
+//GetLocalTime(),SetLocalTime() //현재 지역시간을 가져온다.
+ 
+
+SYSTEMTIME st;
+GetLocalTime(&st); //현재 시간, 날자를 넣는다.
+st.wYear=m_date2.GetYear();
+st.wMonth=m_date2.GetMonth();
+st.wDay=m_date2.GetDay();
+SetSystemTime(&st);
+ 
+
+45. 시스템 시간 바꾸기 버튼
+UpdateData(TRUE);
+SYSTEMTIME st;
+GetLocalTime(&st);
+st.wHour=m_time.GetHour();
+st.wMinute=m_time.GetMinute();
+st.wSecond=m_time.GetSecond();
+SetLocalTime(&st);
+ 
+
+46.시스템의 드라이브 문자 얻기
+ 
+
+char temp[50];
+GetLogicalDriveStrings(sizeof(temp),temp);
+CString str,str1;
+int n=0;
+while(*(temp+n)!=NULL)
+{
+	str=temp+n;
+	str1+= " "+str.Left(2);
+	n+=4;
+}
+ 
+
+47. 현재 작업경로 얻기
+char temp[MAX_PATH]; //MAX_PATH 는 경로길이의 최대를 define 해놓은것.
+GetCurrentDirectory(sizeof(temp),temp); // 현작업하는 경로를 얻어온다.(경로 길이,문자형);
+
+
+48. Tree Control 사용하기
+HTREEITEM hmov,hmus; //핸들을받을 변수 이게 잇어야 하위 디렉토리 생성가능
+hmov=m_tree.InsertItem("영화",TVI_ROOT,TVI_LAST); //,TVI_ROOT,TVI_LAST는 default
+hm1=m_tree.InsertItem("외화",hmov); //hmov 아래 “외화”트리 생성
+CImageList m_image; //그림을 사용하기 위한 클래스다!! 알아두자..
+m_tree.SetImageList(&m_image,TVSIL_NORMAL); //Tree View Style Image List => TVSIL
+hmov=m_tree.InsertItem("영화",0,1,TVI_ROOT,TVI_LAST); //,TVI_ROOT,TVI_LAST는 default
+hmus=m_tree.InsertItem("가요",1,2); //("문자열",처음그림번호,선택시그림)
+hm1=m_tree.InsertItem("외화",2,3,hmov); //그림 번호는 default 로 0이 들어간다..
+
+
+49. List Control 사용하기
+m_list.ModifyStyle(LVS_TYPEMASK, LVS_ICON); //리스트를 큰아이콘형태로 보인다
+m_list.ModifyStyle(LVS_TYPEMASK, LVS_SMALLICON); //리스트를 작은아이콘형태로 보인다
+m_list.ModifyStyle(LVS_TYPEMASK, LVS_LIST); //리스트를 리스트형태로 보인다
+m_list.ModifyStyle(LVS_TYPEMASK, LVS_REPORT); //리스트를 자세히형태로 보인다
+
+
+CImageList m_treeimage; //이미지리스트
+CImageList m_small, m_large;
+m_large.Create(IDB_LARGE,32,0,RGB(255,255,255)); //이거는 클래스에서 추가해준거다
+m_small.Create(IDB_SMALL,16,0,RGB(255,255,255)); (bmp ID값,
+		m_list.SetImageList(&m_large,LVSIL_NORMAL);
+		m_list.SetImageList(&m_small,LVSIL_SMALL);
+		CString name[]={"홍길동","진달래","한국남","개나리"};
+		CString tel[]={"400-3759","304-7714","505-9058","700-9898"};
+		CString born[]={"1980-1-1","1981-12-20","1980-05-15","1981-08-31"};
+		CString sex[]={"남자","여자","남자","여자"};
+
+		m_list.InsertColumn(0,"이름",LVCFMT_LEFT,70);
+		m_list.InsertColumn(1,"전화번호",LVCFMT_LEFT,80);
+		m_list.InsertColumn(2,"생일",LVCFMT_LEFT,90);
+		m_list.InsertColumn(3,"성별",LVCFMT_LEFT,50);
+		LVITEM it; //리스트 구조체
+		char temp[100];
+		for(int a=0;a<4;a++)
+		{ 
+		int n=(sex[a]=="남자")?0:1;
+		m_list.InsertItem(a,name[a],n); //insert item 은 행을 만들고..
+		it.mask=LVIF_TEXT|LVIF_IMAGE; //마스크 설정
+		it.iItem=a;
+		it.iSubItem=1; //열 설정
+		strcpy(temp,tel[a]); //이거 모하는거냐..
+		it.pszText=temp;
+		m_list.SetItem(&it); // setitem 열에 정보를 넣는다.
+
+
+		it.iSubItem=2; //열 설정
+		strcpy(temp,born[a]); //이거 모하는거냐..
+		it.pszText=temp;
+		m_list.SetItem(&it); // setitem 열에 정보를 넣는다.
+
+
+		it.iSubItem=3; //열 설정
+		strcpy(temp,sex[a]); //이거 모하는거냐..
+		it.pszText=temp;
+		m_list.SetItem(&it); // setitem 열에 정보를 넣는다.
+
+
+
+		50. Bitmap Button 사용하기
+			CBitmapButton 을 사용한다! CButton 에서 상속 받는클래스임..
+			m_button1.Create(NULL,
+					WS_CHILD|WS_VISIBLE|BS_OWNERDRAW,CRect(310,20,370,50),
+					this,IDC_MYBUTTON); //버튼만들기
+		m_button1.LoadBitmaps(IDB_UP,IDB_DOWN,IDB_FOCUS,IDB_DISABLE); //버튼의 그림설정
+		m_button1.SizeToContent(); //버튼을 그림 크기로 맞춰 준다!!
+
+
+		그냥 버튼을 비트맵버튼으로 바꾸기 -> 버튼을 만든다 속성에서 OWNERDRA 속성에 체크!!
+			m_button2.LoadBitmaps(IDB_UP,IDB_DOWN,IDB_FOCUS,IDB_DISABLE); //버튼의 그림설정
+		m_button2.SizeToContent(); //버튼을 그림 크기로 맞춰 준다!!
+ 
+
+
+51. 중복없는 난수발생하기
+int su; //발생된 난수저장
+int a,b;
+BOOL bDasi; //숫자가중복될경우 다시하기위한 변수
+for(a=0;a<9;a++) //난수 9개 발생
+{
+	bDasi=TRUE;
+	while(bDasi)
+	{
+		bDasi=FALSE;
+		su=rand()%10; //난수발생
+		for(b=0;b
+				{
+				if(temp[b]==su) //중복이면
+				{
+				bDasi=TRUE; //중복이 잇으면 다시while 문을 실행한다
+				break;
+				}//if
+				}//for
+				}//while
+				temp[a]=su; //중복이 아니면 대입한다
+ 
+
+52. 메뉴 범위로 사용하기
+ON_COMMAND_RANGE(ID_LEVEL3,ID_LEVEL9,OnLevel); //범위메세지 발생
+//메뉴 ID의 값이 연속된 숫자일 경우 범위로 지정해서 사용할수잇다
+ 
+
+53. 한,영 전환함수
+void CCustView::SetHangul(BOOL bCheck) //T:한글 F:영문 이건 외우자..
+{
+HIMC hm=ImmGetContext(this->GetSafeHwnd()); //뷰클래스의 윈도우 핸들포인터를 얻는다.
+if(bCheck)
+{
+::ImmSetConversionStatus(hm,1,0); //1은 한글 0은 영문
+}
+else
+{
+::ImmSetConversionStatus(hm,0,0); //영문으로 바꿔준다
+}
+::ImmReleaseContext(this->GetSafeHwnd(),hm); //장치를 풀어준다
+}
+#include "imm.h" //헤더 반드시 추가하고
+imm32.lib (라이브러리 파일)를 반드시 링크해주어야 한다!
+**** 라이브러리 추가하기
+프로젝트메뉴 -> 셋팅 -> 링크탭
+ 
+
+54. DLL함수정의하기
+임포트함수 : extern "C" __declspec(dllimport) 리터형 함수명(매개변수,...) ;
+- 메인프로그램에서 DLL에 있는 함수를 호출할때 사용한다.
+ 
+
+엑스포트함수 : extern "C" __declspec(dllexport) 리터형 함수명(매개변수,...)
+{
+내용;
+}
+이올린에 북마크하기(0) 이올린에 추천하기(0) 
+'갈켜주마! 콤퓨타!! > MFC' 카테고리의 다른 글
+MFC 자주 쓰이는 녀석들 (0) 2008/07/31 
+visual studio 소스 정렬 (0) 2008/07/30 
+Inf파일 구조 (0) 2008/03/19 
+ActiveX Deployment, CRT, MFC (0) 2008/03/19 
+ActiveX PreTranslateMessage (0) 2008/02/20 
+[펌] VS2005_sp1 warning C4819: 현재 코드 페이지(949)에서 표시할 수 없는 문자가 파일에 들어 있습니다. (0) 2008/01/23 
+Filed under : 갈켜주마! 콤퓨타!!/MFC 
+Tag : MFC, 팁 
+Comment Trackback
+Trackback URL : http://urassa.tistory.com/trackback/306
+허벌라게 좋은 것들...
+Posted 2007/12/12 19:45 
+출처 : http://tong.nate.com/hide29/34783326
+API 프로그래밍에 대한 Q&A입니다.
+1. 특정 디렉토리 뒤지기
+지정한 디렉토리에 있는 모든 파일을 찾아내는 코드를 만들려면 어떻게 해야 합니까 ?
+이 때 사용할 수 있는 API가 바로 FindFirstFile과 FindNextFile, FindClose라는 API들입니다. 사용 예제는 다음과 같습니다.
+WIN32_FIND_DATA findFileData;
+HANDLE hFileHandle;
+// szDir에 뒤지고자 하는 디렉토리의 경로명을 준다. 예를 들면 "C:\TEMP\*.*"
+// 찾아진 파일의 속성은 findFileData의 dwFileAttributes를 살펴본다.
+hFileHandle = FindFirstFile(m_szDir, &findFileData); 
+if (hFileHandle != INVALID_HANDLE_VALUE) // 파일을 찾은 경우 
+{
+// 찾은 파일의 이름은 cFileName 필드로 들어온다.
+...
+// 다음 파일을 찾는다.
+while(FindNextFile(hFileHandle, &findFileData)) {
+...
+}
+FindClose(hFileHandle);
+} 
+2. API를 이용하는 유니코드와 ANSI 문자열간의 변환 방법
+API를 이용해서 유니코드와 ANSI 문자열간의 변환은 어떻게 수행합니까 ?
+Visual C++에서 유니코드 문자열은 BSTR이란 타입으로 표시됩니다. 또 유니코드와 ANSI 문자열간의 변환을 위해서 윈도우 시스템에는 MultiByteToWideChar와 WideCharToMultiByte라는 API가 존재합니다. MFC에서의 BSTR 타입 변환방법이나 ATL로 하는 BSTR 타입 변환도 참고하시기 바랍니다.
+
+ANSI 문자열에서 유니코드로의 변환 방법 
+// sTime이란 ANSI 문자열을 bstr이란 이름의 유니코드(BSTR 타입) 변수로 변환
+char sTime[] = "유니코드 변환 예제";
+BSTR bstr;
+// sTime을 유니코드로 변환하기에 앞서 먼저 그 길이를 알아야 한다.
+int nLen = MultiByteToWideChar(CP_ACP, 0, sTime, lstrlen(sTime), NULL, NULL);
+// 얻어낸 길이만큼 메모리를 할당한다.
+bstr = SysAllocStringLen(NULL, nLen);
+// 이제 변환을 수행한다.
+MultiByteToWideChar(CP_ACP, 0, sTime, lstrlen(sTime), bstr, nLen);
+// 필요없어지면 제거한다.
+SysFreeString(bstr);
+유니코드에서 ANSI 문자열로의 변환 방법 
+// newVal이란 BSTR 타입에 있는 유니코드 문자열을 sTime이라는 ANSI 문자열로 변환
+char *sTime;
+int nLen = WideCharToMultiByte(CP_ACP, 0, newVal, -1, sTime, 0, NULL, NULL);
+sTime = malloc(nLen+1);
+WideCharToMultiByte(CP_ACP, 0, newVal, -1, sTime, 128, NULL, NULL);
+// 필요없으면 메모리를 제거한다.
+free(sTime);
+유니코드 문자열을 UTF-8으로 변환하기 
+WideCharToMultiByte 함수를 호출할 때 첫 번째 인자로 CP_UTF8을 지정하면 된다. UTF-8은 유니코드의 인코딩 스킴 중의 하나로 쉽게 말하자면 문자열 스트림에서 0을 빼고 표현하는 방법이라고 볼 수 있다.
+
+
+
+3. 레지스트리 읽기/쓰기
+API를 이용해서 레지스트리에 한 항목을 생성하거나 기존 항목의 값을 읽어들이려면 어떻게 해야합니까 ?
+레지스트리 관련 API를 사용하려면 winreg.h라는 헤더 파일을 소스에 포함해야 합니다. 레지스트리에 키를 생성하는 방법과 레지스트리에 존재하는 키의 값을 읽는 방법을 차례로 살펴보겠습니다.
+
+레지스트리 키 생성 예제 
+// 예를 들어 HKEY_LOCAL_MACHINE밑의 SystemCurrentControlSetServicesGenPort라는 키를
+// 생성하고 거기에 DWORD 타입의 값으로 Type을 만들고 문자열 타입의 값으로 Group
+// 을 만들어 본다.
+
+
+#include "winreg.h"
+LONG error = 0;
+HKEY hKey;
+DWORD dwDisp, dwData;
+char lpData[] = "Write this down";
+// 먼저 만들려는 키가 이미 존재하는 것인지 살혀본다.
+error = RegOpenKeyEx(HKEY_LOCAL_MACHINE, "System\CurrentControlSet\Services\GenPort",
+		0, KEY_ALL_ACCESS, &hKey);
+if (error != ERROR_SUCCESS) // 없다면 새로 생성한다.
+{
+	// 키를 생성한다.
+	error = RegCreateKeyEx(HKEY_LOCAL_MACHINE,
+			"System\CurrentControlSet\Services\GenPort", 0, "REG_BINARY", 
+			REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, 0, &hKey, &dwDisp);
+	// 위의 키 밑에 Type이란 DWORD 타입의 값을 만들고 1로 초기화
+	dwData = 0x1;
+	error = RegSetValueEx( hKey, "Type", 0, REG_DWORD,&dwData,4); 
+	// 위의 키 밑에 Group이란 문자열 타입의 값을 만들고 lpData의 값으로 초기화
+	error = RegSetValueEx( hKey, "Group", 0, REG_SZ, lpData, strlen(lpData));
+	// 키를 닫는다.
+	RegCloseKey(hKey); 
+}
+기존의 레지스트리 키에서 값 읽기 
+// HKEY_CURRENT_USERSoftwareNetscapeNetscape NavigatorMain 밑의 Install Directory
+// 값의 문자열 값을 읽어들인다.
+DWORD dwType, cbData;
+HKEY hSubKey; 
+long lRet;
+char pszString[255];
+// 키를 오픈한다.
+if ((lRet = RegOpenKeyEx(HKEY_CURRENT_USER, 
+				"Software\Netscape\Netscape Navigator\Main",
+				0, KEY_READ | KEY_QUERY_VALUE , &hSubKey)) == ERROR_SUCCESS)
+{
+	cbData = 255; // 문자열 값을 읽어올 데이터의 크기를 준다.
+	if ((lRet = RegQueryValueEx(hSubKey, "Install Directory",
+					NULL, &dwType, pszString, &cbData)) == ERROR_SUCCESS)
+	{
+		// 제대로 읽힌 경우
+	}
+	else
+	{
+		// 에러가 발생한 경우
+	}
+	RegCloseKey(hSubKey);
+}
+레지스트리 키 삭제하기 - RegDeleteKey 함수를 사용한다. 
+
+
+4. 윈도우 탐색기로부터의 Drag&drup을 받으려면
+윈도우 탐색기로부터 제가 만든 윈도우로의 drag&drup이 가능하게 하려면 어떻게 해야 합니까 ?
+다음 순서를 따라서 프로그래밍하시면 됩니다.
+프로그램의 초기화시에 DragAcceptFiles(hWnd, TRUE) 함수를 호출한다. 첫 번째 인자인 hWnd는 드롭의 타겟이 되는 윈도우의 핸들이다. 
+탐색기로부터 파일이 드롭되는 순간에 WM_drupFILES 메시지가 날라온다. 이를 처리한다. 
+
+case WM_drupFILES :
+{
+	POINT pt;
+	// 어느 위치에 드롭되었는지 그 항목을 알아낸다.
+	if (DragQueryPoint((Hdrup)wParam, &pt)) 
+	{
+		UINT i = 0;
+		// 모두 몇 개의 파일이 드롭되었는지 알아낸다.
+		// 만일 폴더가 드롭되었다면 폴더의 이름만 넘어온다.
+		UINT uCount = DragQueryFile((Hdrup)wParam, 0xFFFFFFFF, NULL ,0);
+		for(i = 0;i < uCount;i++)
+		{
+			// 드롭된 파일의 이름을 알아온다.
+			DragQueryFile((Hdrup)wParam, i, buffer ,255);
+			// 드롭된 파일 이름을 출력해본다.
+			MessageBox(hWnd, buffer, "File Name", MB_OK);
+		}
+	}
+	// drag and drup 작업을 끝낸다.
+	DragFinish((Hdrup)wParam);
+	break;
+}
+Drag&drup을 더 사용할 필요가 없어지면 DragAcceptFiles를 호출한다. 
+DragAcceptFiles(hWnd, FALSE);
+
+
+5. 시스템의 모든 드라이브 알아내기
+현재 시스템에 붙어있는 모든 드라이브(네트웍 드라이브 포함)에 대한 정보를 알아내고 싶습니다.
+GetLogicalDriveStrings로 시스템에 마운트되어있는 모든 드라이브 정보를 알아낸다. 두 번째 인자인 buffer로 드라이브 정보가 들어오는데 그 구조는 c:,d:과 같은 형식이며 리턴값으로 그 버퍼의 크기가 들어온다.
+char buffer[256];
+DWORD dwRet;
+LPSTR token;
+dwRet = GetLogicalDriveStrings(256, buffer);
+루프를 돌면서 드라이브별 정보를 알아낸다. 이 때는 GetVolumeInformation 함수를 이용한다.
+
+token = buffer; // token이 지금 처리해야할 드라이브를 가리킨다.
+while (dwRet > 0)
+{
+	DWORD FileSystemFlag;
+	char FileSystemName[64];
+	strcpy(DriveString, token);
+	// VolumeName으로 드라이브에 대한 설명 문자열이 넘어온다.
+	if (GetVolumeInformation(token, VolumeName, 255, NULL, NULL, 
+				&FileSystemFlag, FileSystemName, 63))
+	{
+		// 원하는 작업을 수행한다. 
+	}
+	dwRet -= (strlen(token)+1);
+	token = token + strlen(token)+1; // 다음 드라이브로 진행한다.
+}
+
+
+6. 드라이브/디렉토리/파일의 이미지 리스트 인덱스 얻기
+특정 드라이브/디렉토리/파일이 시스템 이미지 리스트에서 어떤 인덱스를 갖는지 알고 싶습니다.
+각 파일이나 드라이브 및 디렉토리에 대한 정보는 Shell 라이브러리에서 제공해주는 SHGetFileInfo 함수를 이용하면 됩니다. 다음의 함수는 첫 번째 인자인 lpFileName으로 주어진 파일에 대한 설명을 두 번째 인자로 받아오고 세 번째 인자로는 시스템 이미지 리스트에서의 인덱스를 얻어옵니다.
+void GetFileInfo(LPSTR lpFileName, LPSTR lpDesc, int *nIndex)
+{
+	DWORD dwAttr;
+	SHFILEINFO sfi;
+	int hIcon = SHGetFileInfo(lpFileName, dwAttr, &sfi, sizeof(SHFILEINFO), 
+			SHGFI_TYPENAME | SHGFI_SYSICONINDEX); 
+	*nIndex = sfi.iIcon;
+	strcpy(lpDesc, sfi.szTypeName);
+}
+
+
+
+7. 리스트 컨트롤에 칼럼 헤더 넣기
+리포트뷰 형식의 리스트 컨트롤에 컬럼 헤더를 집어 넣으려면 어떻게 해야합니까 ?
+
+// <문서명, 등록날짜, 상태> : 3개의 헤더를 만든다.
+LV_COLUMN col;
+col.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
+col.fmt = LVCFMT_LEFT;
+col.cx = 100;
+col.pszText = "문서명";
+col.cchTextMax = strlen(col.pszText);
+ListView_SetColumn(hListView, 0, &col);
+col.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
+col.fmt = LVCFMT_LEFT;
+col.cx = 100;
+col.pszText = "등록날짜";
+col.cchTextMax = strlen(col.pszText);
+ListView_InsertColumn(hListView, 0, &col);
+col.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
+col.fmt = LVCFMT_LEFT;
+col.cx = 100;
+col.pszText = "상태";
+col.cchTextMax = strlen(col.pszText);
+ListView_InsertColumn(hListView, 1, &col); 
+
+
+8. 리스트뷰에 항목 삽입하기
+리스트뷰에 한 항목을 추가하고 싶습니다.
+
+// 이미지 리스트와 부가 정보를 사용하지 않는 리스트뷰 컨트롤이다.
+int nIndex;
+LV_ITEM item;
+// - 첫번째 컬럼 -
+item.mask = LVIF_TEXT; // 이미지 리스트를 사용하려면 LVIF_IMAGE를 추가하고
+// 부가정보를 지정해야할 일이 있다면 LVIF_PARAM을 추가한다.
+item.pszText = lpDocName;
+item.cchTextMax = strlen(lpDocName);
+item.iItem = 1;
+item.iSubItem = 0;
+nIndex = ListView_InsertItem(hListView, &item); 
+// - 두번째 컬럼 -
+item.mask = LVIF_TEXT;
+item.iItem = nIndex;
+item.pszText = lpDate;
+item.cchTextMax = strlen(lpDate);
+item.iSubItem = 1;
+ListView_SetItem(hListView, &item); 
+// - 세번째 컬럼 -
+item.mask = LVIF_TEXT;
+item.iItem = nIndex;
+item.pszText = "";
+item.cchTextMax = strlen(lpDocName);
+item.iSubItem = 2;
+ListView_SetItem(hListView, &item); 
+
+
+9. 리스트뷰 컨트롤에서의 정렬 구현
+리스트뷰 컨트롤에서 칼럼 헤더를 눌렀을 때 정렬이 되도록 하려면 어떻게 해야합니까 ?
+
+일단 리스트뷰 컨트롤의 생성시 윈도우 스타일로 LVS_NOSORTHEADER를 주지 않는다. 
+리스트뷰로부터 칼럼 헤더가 눌렸을 때 오는 이벤트를 받아들인다.
+NM_LISTVIEW *pnmtv = (NM_LISTVIEW FAR *)lParam;
+switch(pnmtv->hdr.code)
+{
+	case LVN_COLUMNCLICK :
+		{
+			// 어느 항목(pnmtv->iSubItem)이 눌렸는지부터 검사한다. 
+			// g_iSubItem은 어느 항목이 눌렸는지 기록해두는 인덱스이다.
+			g_iSubItem = pnmtv->iSubItem;
+			// 정렬함수를 호출한다. CompareFunc가 정렬함수이다.
+			ListView_SortItems(hListView, (PFNLVCOMPARE)CompareFunc, (LPARAM)this); 
+			break;
+		}
+		리스트뷰 항목을 정렬하는데 사용되는 CompareFunc라는 함수를 만든다. 이는 보통 C 함수로 만들거나 클래스를 사용할 경우에는 클래스 내의 static 함수로 만든다. CompareFunc의 코드는 다음과 같다.
+			int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+			{
+				LV_FINDINFO lvfi;
+				int iFirstItem, iSecondItem;
+				lvfi.flags = LVFI_PARAM;
+				lvfi.lParam = lParam1;
+				iFirstItem = ListView_FindItem(hListWnd, -1, &lvfi);
+				lvfi.flags = LVFI_PARAM;
+				lvfi.lParam = lParam2;
+				iSecondItem = ListView_FindItem(hListWnd, -1, &lvfi);
+				char lpFirst[100];
+				char lpSecond[100];
+				ListView_GetItemText(hListWnd, iFirstItem, g_iSubItem, lpFisrt, 100);
+				ListView_GetItemText(hListWnd, iSecondItem, g_iSubItem, lpSecond, 100);
+				// g_iSubItem 컬럼의 성격에 따라 비교한다. 문자열이라면 아래와 같이 한다.
+				int iRet = strcmpi(lpFirst, lpSecond); 
+				return iRet;
+			}
+
+
+10. 버전 정보 알아내기 코드
+파일의 버전을 API를 통해 알아내려면 어떻게 해야합니까 ?
+Resource의 한 타입으로 VERSIONINFO라는 것이 존재합니다. 여기에 해당 파일의 버전 정보를 기록하도록 되어있습니다. 이 버전 정보를 읽어오는데 ver.dll이라는 DLL에 들어있는 API들을 사용합니다. 주의할 점은 버전 리소스는 언어별로 설정이 되기 때문에 영어로도 읽어보고 한국어 로도 읽어봐야 한다는 것입니다. 다음 예제를 참고하시기 바랍니다.
+// szDrvName이란 파일에 들어있는 버전 정보를 읽어온다. 
+#include
+DWORD dwSize, handle;
+LPSTR lpstrVffInfo;
+HANDLE hMem;
+LPSTR lpVersion; // 이 변수로 파일의 버전 정보가 들어온다.
+char szDrvName[80]; // 버전 정보를 알아내고자 하는 파일 이름이 여기에 들어온다.
+....
+// 버전 정보 블록의 크기를 알아온다.
+dwSize = GetFileVersionInfoSize(szDrvName , &handle);
+if (dwSize) // 버전 정보 블록이 존재하면
+{ 
+	// 버전 정보 블록을 포함할 메모리 블록을 할당 받아둔다.
+	hMem = GlobalAlloc(GMEM_MOVEABLE, dwSize);
+	lpstrVffInfo = GlobalLock(hMem);
+	// 버전 정보 블록의 내용을 읽어온다. 
+	GetFileVersionInfo(szDrvName, handle, dwSize, lpstrVffInfo);
+	// 버전 정보 블록에서 버전 정보를 읽어온다.
+	VerQueryValue((LPVOID)lpstrVffInfo, 
+			(LPSTR)"\StringFileInfo\041204B0\FileVersion",
+			(void FAR* FAR*)&lpVersion, (UINT FAR *)&dwSize);
+	// lpVersion에 들어있는 버전 정보를 사용한다.
+	....
+		GlobalUnlock(hMem);
+	GlobalFree(hMem);
+}
+위에서 041204B0가 바로 버전 리소스에 사용된 언어가 무엇인지를 나타냅니다. 이는 영어를 나타내며 한국어의 경우에는 040904B0를 사용하면 됩니다. 이 밖에도 version.lib를 링크의 라이브러리 항목에 추가해야 합니다. 
+
+
+
+11. 시스템 사양 알아내기
+현재 시스템에 부착되어 있는 메인 메모리의 양과 CPU와 운영체제의 종류를 알고 싶습니다.
+먼저 시스템에 부착되어 있는 메인 메모리의 크기는 GlobalMemoryStatus라는 API를 이용하면 됩니다. 예제 코드는 다음과 같습니다.
+//===========================================================
+// lMemTotal : 실제 메모리의 전체 크기 (KB 단위)
+// lAvailMemTotal : 사용 가능한 실제 메모리의 크기 (KB 단위)
+// lVirtualTotal : 가상 메모리의 전체 크기 (KB 단위)
+//===========================================================
+void GetMemoryStatus(long *lMemTotal, long *lAvailMemTotal, long *lVirtualTotal)
+{
+	double var;
+	MEMORYSTATUS memoryStatus;
+	memset (&memoryStatus, sizeof (MEMORYSTATUS), 0);
+	memoryStatus.dwLength = sizeof (MEMORYSTATUS);
+	GlobalMemoryStatus (&memoryStatus);
+	lMemTotal = memoryStatus.dwTotalPhys / 1024;
+	lAvailMemTotal = memoryStatus.dwAvailPhys / 1024;
+	lVirtualTotal = memoryStatus.dwTotalVirtual / 1024;
+}
+
+
+다음으로 CPU의 종류를 알아내는 코드는 다음과 같습니다. 
+//===============================================================
+// GetProcessorInfo : 프로세서에 대한 정보를 읽어온다.
+// lpCPUSpeed : CPU의 속도. 기록된 시스템에서만 읽어온다.
+// lpProcessorType : 프로세서의 종류
+// lpNumProcessors : 프로세서의 개수. NT의 경우에만 의미가 있다.
+//===============================================================
+void GetProcessorInfo(LPSTR lpCPUSpeed, LPSTR lpProcessorType, LPSTR lpNumProcessors)
+{
+	SYSTEM_INFO sysInfo;
+	LONG result;
+	HKEY hKey;
+	DWORD data;
+	DWORD dataSize;
+	lpCPUSpeed[0] = 0;
+	// ---------------------------------------------
+	// 프로세서의 속도를 얻어낸다.
+	// ---------------------------------------------
+	result = ::RegOpenKeyEx (HKEY_LOCAL_MACHINE,
+			"Hardware\Description\System\CentralProcessor\0", 0, KEY_QUERY_VALUE, &hKey);
+	if (result == ERROR_SUCCESS) 
+	{
+		result = ::RegQueryValueEx (hKey, "~MHz", NULL, NULL,(LPBYTE)&data, &dataSize);
+		wsprintf(lpCPUSpeed, "%d MHz", data);
+	}
+	RegCloseKey (hKey);
+	// ------------------------------------------
+	// 하드웨어 정보를 얻어낸다.
+	// ------------------------------------------
+	GetSystemInfo (&sysInfo);
+	// 프로세서 타입부터 검사한다.
+	if (sysInfo.dwProcessorType == PROCESSOR_INTEL_386)
+		strcpy(lpProcessorType, "Intel 386");
+	else if (sysInfo.dwProcessorType == PROCESSOR_INTEL_486)
+		strcpy(lpProcessorType, "Intel 486");
+	else if (sysInfo.dwProcessorType == PROCESSOR_INTEL_PENTIUM)
+	{
+		if (sysInfo.wProcessorLevel == 6) 
+			strcpy(lpProcessorType, "Intel Pentium (II/Pro)");
+		else
+			strcpy(lpProcessorType, "Intel Pentium");
+	}
+	else 
+		strcpy(lpProcessorType, "알 수 없는 시스템");
+	// 프로세서의 갯수를 검사한다.
+	wsprintf(lpNumProcessors, "%d", sysInfo.dwNumberOfProcessors);
+}
+
+다음으로 현재 사용 중인 운영체제의 종류를 알아내는 코드는 다음과 같습니다. 
+
+//===============================================================
+// GetOSVersion : OS의 버전을 얻어온다.
+// --------------------------------------------------------------
+// lpstInfo
+// lpstBuildNumber
+// lpstServicePack
+//===============================================================
+void GetOSVersion (LPSTR lpstInfo, LPSTR lpstBuildNumber, LPSTR lpstServicePack)
+{
+	int stat = 0;
+	TCHAR data [64];
+	DWORD dataSize;
+	DWORD win95Info;
+	OSVERSIONINFO versionInfo;
+	HKEY hKey;
+	LONG result;
+	lpstServicePack[0] = 0;
+	versionInfo.dwOSVersionInfoSize = sizeof (OSVERSIONINFO);
+	// 버전 정보를 얻어낸다.
+	if (!::GetVersionEx (&versionInfo)) 
+	{
+		strcpy(lpstInfo, "운영체제 정보를 얻을 수 없습니다.");
+		return;
+	}
+	// NT이면 서버인지 웍스테이션인지 검사한다. 이는 레지스트리를 보고 검사한다.
+	if (versionInfo.dwPlatformId == VER_PLATFORM_WIN32_NT) 
+	{
+		strcpy(lpstInfo, "Windows NT");
+		dataSize = sizeof (data); 
+		result = ::RegOpenKeyEx (HKEY_LOCAL_MACHINE,
+				"System\CurrentControlSet\Control\ProductOptions", 0, KEY_QUERY_VALUE, &hKey);
+		if (result != ERROR_SUCCESS) 
+			return;
+		result = ::RegQueryValueEx (hKey, "ProductType", NULL, NULL, (LPBYTE) data, &dataSize);
+		RegCloseKey (hKey);
+		if (result != ERROR_SUCCESS) 
+			return;
+		if (lstrcmpi (data, "WinNT") == 0) 
+			strcpy(lpstInfo, "Windows NT Workstation");
+		else if (lstrcmpi (data, "ServerNT") == 0) 
+			strcpy(lpstInfo, "Windows NT Server");
+		else 
+			strcpy(lpstInfo, "Windows NT Server - Domain Controller");
+		// NT 버전을 알아낸다.
+		if (versionInfo.dwMajorVersion == 3 || versionInfo.dwMinorVersion == 51) 
+			strcat(lpstInfo, " 3.51");
+		else if (versionInfo.dwMajorVersion == 5) // 윈도우 2000의 경우
+			strcat(lpstInfo, " 5.0");
+		else 
+			strcat(lpstInfo, " 4.0");
+		// Build 번호를 알아낸다.
+		wsprintf(lpstBuildNumber, "%d", versionInfo.dwBuildNumber);
+	}
+	else if (versionInfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) 
+	{
+		strcpy(lpstInfo, "Windows 95");
+		if ((versionInfo.dwMajorVersion > 4) || ((versionInfo.dwMajorVersion == 4)
+					&& (versionInfo.dwMinorVersion > 0))) 
+		{
+			strcpy(lpstInfo, "Windows 98");
+		}
+		// 윈도우 95는 Build 번호가 하위 워드에 들어간다.
+		win95Info = (DWORD)(LOBYTE(LOWORD(versionInfo.dwBuildNumber)));
+		wsprintf(lpstBuildNumber, "%d", win95Info);
+	}
+	else 
+		wsprintf(lpstInfo, "Windows 3.1");
+	// 서비스 팩 정보를 얻어낸다.
+	strcpy(lpstServicePack, versionInfo.szCSDVersion);
+}
+
+
+12. IE의 설치 여부와 버전 확인
+현재 시스템에 IE가 설치되었는지 여부와 그 버전을 알려면 어떻게 해야합니까 ?
+사실 동작시켜보지 않고서는 IE가 제대로 설치되어있는지 알아내는 방법은 없지만 레지스트리를 통해 IE가 설치되었는지 여부와 버전을 확인할 수 있습니다. 그 함수는 다음과 같습니다.
+
+//===========================================================================
+// GetIEVersion : IE의 버전을 얻는다. 정보를 찾을 수 없으면 FALSE를 리턴한다.
+//===========================================================================
+BOOL GetIEVersion(LPSTR lpVer)
+{ 
+	LONG result;
+	HKEY hKey;
+	DWORD dwType; 
+	char data[65];
+	DWORD dataSize = 64;
+	// --------------------
+	// IE의 버전을 얻는다.
+	// --------------------
+	result = ::RegOpenKeyEx (HKEY_LOCAL_MACHINE, "Software\Microsoft\Internet Explorer", 0, KEY_QUERY_VALUE, &hKey);
+	if (result == ERROR_SUCCESS) 
+	{
+		result = ::RegQueryValueEx (hKey, "Version", NULL, &dwType, (unsigned char *)data, &dataSize);
+		strcpy(lpVer, data);
+	}
+	else
+		return FALSE;
+	RegCloseKey (hKey);
+	return TRUE;
+}
+
+
+13. IE의 보안 설정 보기
+IE에 보면 네 단계의 보안 영역이 있습니다. 그 영역별로 설정되어있는 보안 설정값을 읽으려면 어떻게 해야합니까 ?
+IE에는 다음과 같은 네 가지 보안 영역이 존재합니다.
+인터넷 영역 
+로컬 인터넷 영역 
+신뢰할 수 있는 사이트 영역 
+제한된 사이트 영역 
+IE는 보안 영역 설정과 관련하여 Internet Security Manager와 Internet Zone Manager라는 인터페이스가 존재합니다. 이를 이용해 보안 영역의 보안을 설정하고 특정 IP나 도메인 이름을 등록할 수 있습니다. 자세한 사항은 레퍼런스를 찾아보기 바랍니다.
+
+#include "objbase.h"
+#include "urlmon.h"
+char szTemp1[256];
+char szTemp2[256];
+HRESULT hr;
+IInternetSecurityManager *pSecurityMgr;
+IInternetZoneManager *pZoneMgr;
+DWORD dwEnum, dwZoneCount;
+
+// --- 변수 선언부
+DWORD dwZone;
+ZONEATTRIBUTES zoneAttr;
+int nLevel = 2;
+// COM 라이브러리를 초기화한다.
+CoInitialize(NULL);
+dwEnum = 0;
+pSecurityMgr = NULL;
+pZoneMgr = NULL;
+
+// Internet Security 인터페이스 초기화
+hr = CoCreateInstance(CLSID_InternetSecurityManager, NULL, CLSCTX_ALL, //INPROC_SERVER,
+		IID_IInternetSecurityManager, (void**)&pSecurityMgr);
+if (hr != S_OK)
+{
+	return;
+}
+hr = CoCreateInstance(CLSID_InternetZoneManager, NULL, CLSCTX_ALL, //INPROC_SERVER,
+		IID_IInternetZoneManager, (void**)&pZoneMgr); 
+if (hr != S_OK)
+{
+	return;
+}
+dwEnum = 0;
+// 보안 영역 열거자(Zone Enumerator)를 초기화한다.
+pZoneMgr->CreateZoneEnumerator(&dwEnum, &dwZoneCount, 0);
+for(DWORD i = 1;i < dwZoneCount;i++)
+{
+	pZoneMgr->GetZoneAt(dwEnum, i, &dwZone);
+	pZoneMgr->GetZoneAttributes(dwZone, &zoneAttr);
+	// zoneAttr.szDisplayName에 보안 영역의 이름이 들어오는데 유니코드이다. 이를 변환한다.
+	WideCharToMultiByte(CP_ACP, 0, zoneAttr.szDisplayName, -1, szTemp1, 255, NULL, NULL); 
+	// zoneAttr.dwTemplateCurrentLevel에는 보안 영역의 보안값 설정이 들어온다.
+	wsprintf(szTemp2, "%x", zoneAttr.dwTemplateCurrentLevel);
+}
+// 보안 영역 열거자(Zone Enumerator)를 제거한다.
+if (dwEnum != 0)
+	pZoneMgr->DestroyZoneEnumerator(dwEnum);
+	pSecurityMgr->Release();
+	pZoneMgr->Release();
+	// COM 라이브러리를 메모리에서 내린다.
+	CoUninitialize();
+	}
+
+
+14. ActiveX 컨트롤의 등록 방법
+Regsvr32 같은 유틸리티를 이용하지 않고 프로그램 내에서 컨트롤을 레지스트리에 등록하려면 어떻게 해야합니까 ?
+모든 AcitveX 컨트롤은 자신을 레지스트리에 등록하기위한 목적으로 DllRegisterServer라는 함수를 갖고 있습니다. ActiveX 컨트롤을 메모리로 로드한 다음에 이 함수를 불러주면 원하는 일을 수행할 수 있습니다. 반대로 ActiveX 컨트롤을 레지스트리에서 제거하기 위한 용도로 DllUnRegisterServer라는 함 수도 존재합니다.
+
+// ==============================================================
+// RegisterOCX 지정된 ActiveX 컨트롤을 레지스트리에 등록한다.
+// --------------------------------------------------------------
+// LPSTR pszString 등록하고자 하는 ActiveX 컨트롤의 절대 경로명
+// ==============================================================
+BOOL WINAPI RegisterOCX(LPSTR pszString)
+{
+	int iReturn = 0;
+	HRESULT (STDAPICALLTYPE * lpDllEntryPoint)();
+	HINSTANCE hLib;
+	// OLE 라이브러리를 초기화한다. 
+	if (FAILED(OleInitialize(NULL)))
+	{
+		MessageBox(GetFocus(), "OLE 초기화 실패", "에러", MB_OK);
+		return FALSE;
+	}
+	// 지정된 activeX 컨트롤을 메모리로 로드한다.
+	hLib = LoadLibrary(pszString);
+	if (hLib <= NULL)
+	{
+		MessageBox(GetFocus(), "파일을 로드하는데 실패했습니다.", "에러", MB_OK);
+		OleUninitialize();
+		return FALSE;
+	}
+	// "DllRegisterServer" 함수의 위치를 찾는다.
+	lpDllEntryPoint = (long (__stdcall *)(void))GetProcAddress(hLib, "DllRegisterServer");
+	// 이 함수를 호출합니다.
+	if (lpDllEntryPoint)
+	{
+		if (FAILED((*lpDllEntryPoint)()))
+		{
+			DWORD dwRet;
+			char szTemp[128];
+			dwRet = GetLastError();
+			wsprintf(szTemp, "에러 번호 : %lx", dwRet);
+			MessageBox(GetFocus(), szTemp, "DllRegisterServer 에러", MB_OK);
+			FreeLibrary(hLib);
+			OleUninitialize();
+			return FALSE;
+		}
+	}
+	else
+	{
+		MessageBox(GetFocus(), "DllRegisterServer를 찾을 수 없습니다.", "에러", MB_OK);
+		FreeLibrary(hLib);
+		OleUninitialize();
+		return FALSE;
+	}
+	FreeLibrary(hLib);
+	OleUninitialize();
+	return TRUE;
+}
+
+
+15. 데이터 파일의 실행
+탐색기에서 실행 파일이 아닌 데이터 파일을 더블클릭하면 그 데이터 파일과 연결된 실행 파일이 실행되면서 그 파일을 물고 올라갑니다. 이를 구현하는 방법을 알려주세요.
+ShellExecuteEx라는 API를 사용하면 됩니다. 다음 함수는 인자로 데이터 파일 혹은 실행 파일의 경로를 받아서 실행해줍니다. 데이터 파일의 경우에는 연결된 실행 파일을 찾아서 그걸 실행해줍니다.
+BOOL Execute(LPSTR lpPath)
+{
+	char FilePath[255];
+	SHELLEXECUTEINFO ExecInfo;
+	// lpPath를 나누어 본다.
+	char drive[_MAX_DRIVE];
+	char dir[_MAX_DIR];
+	char fname[_MAX_FNAME];
+	char ext[_MAX_EXT];
+	_splitpath(lpPath, drive, dir, fname, ext);
+	// 디렉토리 경로를 얻는다.
+	strcpy(FilePath, drive);
+	strcat(FilePath, dir);
+	// 파일 이름을 얻는다.
+	strcat(fname, ".");
+	strcat(fname, ext);
+	SHELLEXECUTEINFO ExecInfo;
+	ExecInfo.cbSize = sizeof(SHELLEXECUTEINFO); 
+	ExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS; 
+	ExecInfo.hwnd = hWnd; 
+	ExecInfo.lpVerb = "open"; 
+	ExecInfo.lpFile = fname; 
+	ExecInfo.lpParameters = NULL; 
+	ExecInfo.lpDirectory = FilePath; 
+	ExecInfo.nShow = SW_SHOW; 
+	ExecInfo.hInstApp = g_hInstance; // g_hInstance는 프로그램의 인스턴스 핸들
+	return ShellExecuteEx(&ExecInfo);
+}
+
+
+16. 파일의 존재 여부 테스트 
+어떤 파일이 실제로 존재하는 것인지 간단히 테스트해보는 방법은 무엇인가요 ?
+CreateFile API를 사용하면 됩니다. 파일을 열때 플래그 중의 하나로 OPEN_EXISTING이라는 것이 있는데 이를 사용하면 됩니다. 다음 코드를 예로 보시기 바랍니다.
+
+	hFile = CreateFile("C:\TEMP\test.txt", GENERIC_READ, 0, NULL, 
+			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+	if (hFile != INVALID_HANDLE_VALUE)
+	{
+		// 파일이 존재하는 경우
+		CloseHandle(hFile);
+	}
+	
+
+
+17. API를 이용한 파일 I/O
+API를 이용한 파일 입출력에 대한 예제 코드가 없습니까 ?
+프로그래밍을 하다보면 간혹 파일 I/O를 API를 이용해 수행해야 할 경우가 있습니다. 이 때 다음의 예제 코드를 복사해다가 사용하면 편리할 것입니다. MFC의 CFile을 이용한 파일 I/O에 대해 알고 싶으시면 요기를 클릭하세요.
+파일 쓰기의 경우 
+
+	HANDLE fp;
+	DWORD NumberOfBytesWritten;
+	char lpBuffer[1024];
+	// FileName이 지정한 파일의 이름이 있으면 그걸 열고 없으면 그 이름으로 하나 생성한다.
+	if ((fp=CreateFile((LPCTSTR)FileName, GENERIC_WRITE | GENERIC_READ, 0, NULL, 
+					OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL)) == INVALID_HANDLE_VALUE)
+	{
+		// 파일 열기 에러 발생
+	} 
+	// 필요한 만큼 WriteFile의 호출을 반복한다. 파일 포인터의 이동시에는 SetFilePointer API를 이용한다.
+	WriteFile(fp, lpBuffer, 1024, &NumberOfBytesWritten, NULL);
+	if (NumberOfBytesWritten != 1024)
+	{
+		// 파일 쓰기 에러 발생 
+		CloseHandle(fp); 
+	}
+	// 작업이 다 끝났으면 파일을 닫는다.
+	CloseHandle(fp); 
+	파일 읽기의 경우 
+	HANDLE fp;
+	DWORD NumberOfBytesRead;
+	char lpBuffer[1024];
+	if ((fp=CreateFile((LPCTSTR)FileName, GENERIC_READ, 
+					FILE_SHARE_READ, NULL, OPEN_EXISTING, 
+					FILE_ATTRIBUTE_NORMAL, NULL)) == INVALID_HANDLE_VALUE)
+	{
+		// 파일 열기 에러 발생
+	} 
+	// 필요한 만큼 ReadFile의 호출을 반복한다.
+	ReadFile(fp, lpBuffer, 1024, &NumberOfBytesRead, NULL);
+	if (NumberOfBytesRead != 1024)
+	{
+		// 파일 읽기 에러 발생 
+		CloseHandle(fp); 
+	}
+	// 작업이 다 끝났으면 파일을 닫는다.
+	CloseHandle(fp); 
+
+파일 포인터의 이동시에는 SetFilePointer라는 API를 사용하고 파일의 크기를 알고 싶을 때는 GetFileSize라는 API를 사용한다.
+
+
+
+18. GetParent API의 리턴값
+다이얼로그 박스에서 GetParent API를 호출했을 때 리턴되는 값이 이상합니다.
+GetParent API의 리턴값은 보통의 윈도우에서는 윈도우 생성시 지정한 부모/자식 윈도우 간의 관계에 따라 달라집니다. 하지만 다이얼로그 박스의 경우에는 다릅니다. 다이얼로그 박스는 GetParent를 호출하면 무조건 그 것이 속한 응용프로그램의 메인 윈도우 핸들이 리턴됩니다.
+
+
+19. 특정 프로그램을 실행하고 종료를 기다리기
+특정 프로그램을 실행한 다음에 그 프로그램이 종료될 때 다른 일을 하고 싶습니다. 어떻게 해야합니까 ?
+다음은 CreateProcess를 이용해서 특정 프로그램의 실행이 끝나기를 기다리는 코드입니다.
+
+// buffer에 실행하고자하는 파일이름이 들어온다.
+void DoCreate(HWND hWnd, LPSTR buffer)
+{
+	STARTUPINFO sui;
+	PROCESS_INFORMATION pi;
+	DWORD ret;
+	memset(&sui, 0x00, sizeof(STARTUPINFO));
+	sui.cb = sizeof(STARTUPINFO);
+	ret = CreateProcess(buffer, NULL, NULL, NULL, FALSE, 
+			0, NULL, NULL,&sui, &pi);
+	if (ret == TRUE) // 제대로 실행되었으면
+	{
+		hProcess = pi.hProcess;
+		// 실행이 끝나기를 대기한다.
+		WaitForSingleObject(hProcess, 0xffffffff);
+		CloseHandle(hProcess);
+	}
+}
+
+20. 파일 열기 다이얼로그 띄우기
+API를 이용해 파일 오픈 다이얼로그를 띄우고 싶습니다.
+API를 이용해 파일 오픈 다이얼로그를 띄우는 방법은 다음과 같습니다.
+#define MAXCHARS 255
+OPENFILENAME ofn;
+char buffer[MAXCHARS];
+memset(&ofn, 0x00, sizeof(OPENFILENAME));
+ofn.lStructSize = sizeof(OPENFILENAME);
+ofn.hwndOwner = hWnd;
+ofn.lpstrFilter = "모든 파일00*.*0000";
+ofn.lpstrInitialDir = m_szTemp;
+ofn.nFilterIndex = 1;
+ofn.lpstrFile = buffer;
+ofn.nMaxFile = MAXCHARS;
+ofn.lpstrTitle = "파일 선택하기";
+if (GetOpenFileName(&ofn)) // 사용자가 파일을 제대로 선택한 경우
+{
+	// ....
+}
+
+21. 긴 파일 이름과 짧은 파일 이름간의 변환 방법
+주어진 긴 파일 이름에 해당하는 짧은 파일 이름을 알려면 어떻게 해야하나요 ?
+긴 파일 이름에서 짧은 파일 이름으로의 변환 : GetShortPathName API 사용 
+짧은 파일 이름에서 긴 파일 이름으로의 변환 : GetFullPathName API 사용 
+22. 시스템 이미지 리스트 얻어내기
+탐색기 등에서 사용되는 시스템 이미지 리스트를 사용할 수 있는 방법이 있는지 알고 싶습니다.
+물론 있습니다. SHGetFileInfo라는 API를 이용하면 됩니다. 이를 이용하면 16X16이나 32X32 크기의 이미지 리스트를 얻어낼 수 있습니다.
+SHFILEINFO sfi;
+HIMAGELIST sysSmallList, sysLargeList;
+sysSmallList = (HIMAGELIST)SHGetFileInfo(TEXT("C:\"), 0, &sfi, sizeof(SHFILEINFO), SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
+sysLargeList = (HIMAGELIST)SHGetFileInfo(TEXT("C:\"), 0, &sfi, sizeof(SHFILEINFO), SHGFI_SYSICONINDEX | SHGFI_ICON);
+
+23. 리스트뷰 컨트롤에서 스타일 동적 변경하기
+리스트뷰 컨트롤에서 리스트(LVS_ICON) 스타일을 사용 중인데 이를 실행 중에 리포트(LVS_REPORT) 스타일로 변경하고 싶습니다. 어떻게 해야할까요 ?
+윈도우의 스타일은 윈도우 엑스트라 바이트라는 영역에 저장됩니다. 이 곳의 데이터를 읽고 쓰는데 GetWindowLong, SetWindowLong 같은 API를 사용하는데 다음 코드를 예로 보시기 바랍니다.
+리스트 스타일에서 리포트 스타일로 
+LONG lStyle = GetWindowLong(hListWnd, GWL_STYLE);
+SetWindowLong(hListWnd, GWL_STYLE, (lStyle & ~LVS_LIST) | LVS_REPORT);
+리포트 스타일에서 리스트 스타일로 
+LONG lStyle = GetWindowLong(hListWnd, GWL_STYLE);
+SetWindowLong(hListWnd, GWL_STYLE, (lStyle & ~LVS_REPORT) | LVS_LIST);
+
+
+24. 윈도우와 다이얼로그에서 클래스 포인터의 사용
+제가 만든 C++ 클래스내에서 윈도우를 생성합니다. 생성한 윈도우의 윈도우 프로시저는 그 클래스의 정적 멤버 함수로 선언되어 있습니다. 정적 함수의 경우에는 데이터 멤버를 접근하지 못하기 때문에 접근하게 하려고 윈도우를 생성한 그 클래스의 객체에 대한 포인터를 전역 변수로 유지하여 사용하고 있습니다. 별로 깨끗한 방법도 아닌 것 같고 또 동시에 여러 개의 객체가 동작할 경우에는 에러가 날 수밖에 없는데 해결 방법이 없을까요 ?
+이는 다이얼로그의 경우에도 마찬가지입니다. 윈도우 생성시 사용하는 CreateWindow나 CreateWindowEx 같은 함수를 보면 마지막 인자로 윈도우 생성 데이터라는 것을 지정하게 되어있습니다. 다이얼로그 생성시에는 DialogBox라는 API말고 DialogBoxParam이라는 API가 있어서 마지막 인자로 초기화 데이터를 넘겨줄 수 있도록 되어있는데 이것과 윈도우 엑스트라 바이트를 같이 사용하면 정적함수로 선언된 윈도우 프로시저나 다이얼로그박스 프로시저내에서 객체에 대한 포인터를 사용할 수 있습니다. 예를 들어 살펴보겠습니다.
+윈도우의 경우 
+다음과 같이 CExplorerBar라는 클래스내에서 윈도우를 하나 생성합니다. CreateWindowEx 함수나 CreateWindow 함수의 마지막 인자로 this 포인터를 지정합니다.
+BOOL CExplorerBar::RegisterAndCreateWindow(void)
+{
+	....
+		CreateWindowEx( 0, EB_CLASS_NAME, NULL,
+				WS_CHILD | WS_CLIPSIBLINGS | WS_BORDER,
+				rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
+				m_hwndParent, NULL, g_hInst, (LPVOID)this);
+}
+	위에서 생성한 윈도우의 윈도우 프로시저는 WndProc이고 CExplorerBar 클래스의 정적 멤버 함수로 존재한다고 가정하겠습니다.
+LRESULT CALLBACK CExplorerBar::WndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
+{
+	CExplorerBar *pThis = (CExplorerBar*)GetWindowLong(hWnd, GWL_USERDATA);
+	switch (uMessage)
+	{
+		case WM_NCCREATE:
+			{
+				LPCREATESTRUCT lpcs = (LPCREATESTRUCT)lParam;
+				pThis = (CExplorerBar*)(lpcs->lpCreateParams);
+				SetWindowLong(hWnd, GWL_USERDATA, (LONG)pThis);
+			}
+			break;
+		case WM_CREATE :
+			return pThis->OnCreate();
+
+WM_NCCREATE 메시지에서 lParam 인자로 넘어오는 CExplorerBar 객체에 대한 포인터를 받아서 윈도우 엑스트라 바이트로 저장하고 있습니다. 윈도우 엑스트라 바이트는 윈도우 마다 할당되는 고유의 영역으로 사용자 정의 영역으로 GWL_USERDATA가 정의되어 있습니다. 여기에다 CExplorerBar 객체에 대한 포인터를 저장해두고 윈도우 프로시저에 진입할 때마다 이 값을 pThis라는 변수에 대입해 놓고 사용합니다. 참고로 WM_NCCREATE는 WM_CREATE 메시지보다 먼저 발생하는 메시지입니다.
+다이얼로그의 경우 
+예를 들어 CKTree라는 클래스내의 한 멤버 함수에서 다이얼로그 박스를 띄운다고 가정하겠습니다.
+
+BOOL CKTree::SelectFolder(short sTypes, long dwFolderID, short bCreationEnabled)
+{
+// ......
+if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_FOLDER_SELECT), hWnd, (DLGPROC)SelectFolderDlg, (LPARAM)this))
+DialogBoxParam 함수는 DialogBox 함수보다 인자가 하나 더 있는데 그것이 바로 다이얼로그 프로시저의 WM_INITDIALOG 메시지의 lParam 인자로 넘어갑니다. 여기에 CKTree 객체에 대한 포인터를 넘깁니다. 그리고나서 다이얼로그 박스 프로시저의 WM_INITDIALOG 메시지에서 이를 받아서
+
+	LRESULT CALLBACK SelectFolderDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		switch (message) 
+		{ 
+			case WM_INITDIALOG:
+				{
+					// lParam으로 넘어온 값을 KPointer라는 윈도우 프로퍼티에 저장한다.
+					SetProp(hDlg, "KPointer", (HANDLE)lParam);
+					.......
+					case WM_NOTIFY :
+					{
+						// CKTree 객체에 대한 포인터가 필요하면 KPointer 윈도우 프로퍼티 값을 읽어들인다.
+						CKTree *pKTree = (CKMartTree *)GetProp(hDlg, "KPointer");
+						if (pKTree->m_bWait)
+						{
+							.....
+
+여기서는 앞서 윈도우와는 달리 윈도우 프로퍼티라는 것을 이용해서 넘어온 포인터 정보를 저장하고 필요할 때 읽어옵니다. 여기서 앞서의 윈도우 엑스트라 바이트를 사용해도 무방합니다.
+
+
+25. 특정 프린터로 출력하기
+제 PC에는 두 대의 프린터가 붙어있습니다. 다이얼로그를 띄우지 않고 상황에 따라 다른 프린터로 출력하고 싶은데 동적으로 HDC를 생성하는 방법을 모르겠습니다.
+CreateDC를 이용하면 됩니다. 시스템 디렉토리의 WIN.INI를 보면 [Devices]라는 섹션이 있는데 이 아래로 이 시스템에 설치되어 있는 모든 프린터 드라이버의 목록이 나옵니다. 예를 들어 다음과 같이 나옵니다.
+[Devices]
+HUNFAX=HUNFAX,FaxModem
+삼성 SLB-6216H PCL5=SSMPCL5,\영업팀볼륨프린터
+......
+프린터별로 DeviceName=DriverName,OutputName와 같은 구조로 구성되어 있습니다. 이 값들을 CreateDC의 인자로 사용하면 됩니다. 예를 들어 위에서 두 번째 프린터의 DC를 생성하려면 다음과 같이 CreateDC를 호출합니다.
+// hDC = CreateDC(DriverName, DeviceName, OutputName, NULL);
+hDC = CreateDC ("SSMPCL5", "삼성 SLB-6216H PCL5", "\\영업팀\볼륨프린터", NULL) ;
+CreateDC의 마지막 인자로는 프린터의 설정값을 변경할 수 있습니다. 예를 들어 가로로 찍는다든지 2장을 찍는다든지 하는 설정을 변경하는데 사용됩니다. NULL을 주면 디폴트 값을 사용합니다. 다른 설정을 사용하고 싶다면 다음과 같이 합니다. CreateDC 호출 앞에서 DocumentProperties라는 함수를 호출하여 프린터의 기본 설정을 읽어온 다음에 이를 변경합니다. 다음 예는 출력 방향을 가로로 변경하는 예제입니다.
+
+// 프린터의 디폴트 설정을 읽어온다.
+LPDEVMODE lpoutDevMode;
+HANDLE hPrinter;
+HDC hPrnDC;
+
+// 프린터의 핸들을 얻는다.
+if (OpenPrinter( lpDeviceName, &hPrinter, NULL))
+{
+	// OpenPrinter로 얻은 프린터의 초기 설정을 DocumentProperties API로 얻어온다.
+	// 먼저 마지막 인자를 0으로 해서 DocumentProperties를 호출하여 필요한 버퍼의 크기를 알아옵니다.
+	long lSize = DocumentProperties(GetFocus(), hPrinter, lpPrinterName, NULL, NULL, 0);
+	lpoutDevMode = (LPDEVMODE)malloc(lSize);
+	long lRet = DocumentProperties(GetFocus(), hPrinter, lpPrinterName, lpoutDevMode, NULL, DM_OUT_BUFFER);
+	if (lRet == IDOK)
+	{
+		// 프린터의 인쇄 방향 설정을 변경한다.
+		// 여기서 원하는 변환을 수행한다.
+		lpoutDevMode->dmOrientation = DMORIENT_LANDSCAPE;
+	}
+	hPrnDC = CreateDC (lpDriverName, lpDeviceName, lpOutputName, lpoutDevMode) ;
+	free(lpoutDevMode);
+	return hPrnDC;
+}
+
+
+26. 메뉴 관련 함수
+메뉴 항목을 하나 추가하려고 합니다. InsertMenuItem API를 사용하는데 윈도우 3.1에서와 사용법이 다른 것 같습니다.
+사용법이 달라졌습니다.
+
+MENUITEMINFO mii;
+memset(&mii, 0x00, sizeof(MENUITEMINFO));
+mii.cbSize = sizeof(MENUITEMINFO);
+mii.fMask = MIIM_TYPE;
+mii.fType = MFT_SEPARATOR;
+InsertMenuItem(hSubMenu, GetMenuItemCount(hSubMenu), TRUE, &mii);
+mii.cbSize = sizeof(MENUITEMINFO);
+mii.fMask = MIIM_TYPE | MIIM_STATE | MIIM_ID;
+mii.fType = MFT_STRING;
+mii.fState = MFS_DEFAULT | MFS_UNHILITE;
+mii.wID = ID_WORKPLACE_REMOVE;
+mii.dwTypeData = "바구니에서 제거";
+InsertMenuItem(hSubMenu, GetMenuItemCount(hSubMenu), TRUE, &mii);
+
+27. 코드 실행 중에 다른 윈도우 메시지 처리하기 
+하나의 함수 내에서 시간이 오래 걸리는 작업을 하고 있습니다. 이 때 작업 취소를 위한 별도의 다이얼로그를 하나 띄워 두었는데 이 쪽의 버튼이 눌리지 않습니다. 어떻게 해야할까요 ?
+시간이 오래 걸리는 작업을 별도의 스레드로 만들어 처리하던지 아니면 시간이 오래 걸리는 작업을 수행하는 함수 안에서 다음 코드를 가끔 호출해주면 됩니다. 만일 루프를 돌고 있다면 루프내에서 한번씩 호출해주면 됩니다.
+MSG msg;
+while (PeekMessage(&msg, NULL, NULL, NULL, TRUE))
+{
+	TranslateMessage(&msg);
+	DispatchMessage(&msg);
+}
+VB에서라면 DoEvents라는 메소드를 호출해주면 됩니다.
+
+28. 메인 윈도우에서 캡션을 제거하고 싶습니다. 어떻게 해야 합니까 ?
+윈도우를 생성할 때 WS_CAPTION이란 스타일을 지정하지 않아도 항상 윈도우의 캡션이 보입니다. 이를 제거하려면 어떻게 해야 하나요 ?
+캡션을 제거하려는 윈도우의 WM_NCCREATE 메시지를 처리해야 합니다. 이 메시지는 WM_CREATE 메시지보다 앞서 발생하는 메시지입니다. NC는 Non-Client를 나타냅니다. GetWindowLong과 SetWindowLong API를 이용해서 WS_CAPTION 스타일을 제거합니다. 이 두 API는 앞서 리스트뷰 컨트롤에서 스타일 동적 변경하기에서 이미 사용해본 바 있습니다.
+case WM_NCCREATE :
+{
+	long lStyle;
+	lStyle = GetWindowLong(hWnd, GWL_STYLE);
+	lStyle = (lStyle & (~WS_CAPTION)); 
+	SetWindowLong (hWnd, GWL_STYLE, lStyle);
+	return TRUE;
+}
+
+29. 사각형 형태 이외의 모양을 갖는 윈도우를 띄우고 싶습니다.
+윈도우는 기본 모양이 사각형인데 다른 형태의 모양을 갖는 윈도우를 띄우려면 어떻게 해야합니까 ?
+원하는 모양을 Region이란 것으로 만들어야 합니다. 만든 다음에 이것을 원하는 시점에 SetWindowRgn라는 API를 이용해 윈도우에 설정해주면 됩니다. 예를 들어 타원 모양의 윈도우를 띄우고 싶다면 다음과 같이 해주면 됩니다.
+HRGN g_hRgn;
+g_hRgn = CreateEllipticRgn(0, 0, 700, 600);
+SetWindowRgn(hWnd, g_hRgn, FALSE); 
+이렇게 했을 경우 윈도우의 위치 이동이 문제가 됩니다. 보통 캡션을 잡고 이동시켜야 하는데 캡션이 없으니까 문제가 됩니다. 이에 관한 것은 31. 윈도우의 이동 처리하기를 참고하기 바랍니다.
+30. 시스템에 설치되어 있는 모든 프린터 드라이버 알아내기
+현재 시스템에 설치되어 있는 모든 프린터 드라이버의 종류를 알아내고 싶습니다.
+EnumPrinters라는 API를 사용하면 됩니다. 다음 코드는 현재 시스템에 설치되어 있는 모든 프린터 드라이버(로컬과 네트웍 프린터 포함)의 이름을 메시지박스로 보여주는 예제입니다.
+
+BOOL bSuccess;
+DWORD cbRequired, cbBuffer, nEntries;
+PRINTER_INFO_1 *lpBuffer = NULL;
+// 버퍼의 크기를 알아낸다. cbRequired로 들어온다.
+EnumPrinters(PRINTER_ENUM_CONNECTIONS | PRINTER_ENUM_LOCAL, NULL, 1, (unsigned char *)lpBuffer, 0, &cbRequired, &nEntries);
+cbBuffer = cbRequired;
+// 버퍼를 다시 버퍼를 잡는다.
+lpBuffer = (PRINTER_INFO_1 *)malloc(cbBuffer);
+// 프린터의 종류를 알아낸다.
+bSuccess = EnumPrinters(PRINTER_ENUM_CONNECTIONS | PRINTER_ENUM_LOCAL, NULL, 1, (unsigned char *)lpBuffer, cbRequired, &cbRequired, &nEntries);
+if (bSuccess == FALSE)
+{
+	free(lpBuffer);
+	// 다른 이유로 에러가 난 경우
+	return;
+}
+// 알아낸 프린터를 하나씩 enumerate한다.
+for (int i = 0;i < nEntries; i++)
+{
+	::MessageBox(NULL, lpBuffer[i].pName, "프린터 이름", MB_OK);
+}
+free(lpBuffer);
+
+31. 윈도우의 이동 처리하기
+보통 윈도우는 캡션 영역을 잡고 위치 이동을 수행하게 되는데 윈도우의 특정 영역을 잡고 이동할 수 있게 하려면 어떻게 해야합니까 ?
+WM_NCHITTEST라는 메시지를 잘(?) 처리하면 어느 영역이든 윈도우 이동을 처리할 수 있습니다. 마우스로 윈도우 위를 이동하면 WM_NCHITTEST, WM_SETCURSOR, WM_MOUSEMOVE 같은 메시지들이 발생합니다. WM_NCHITTEST는 현재 마우스가 윈도우의 어느 영역위에 있는지 알아내기 위해 사용됩니다. 이 메시지의 처리부에서 HTCAPTION이란 값을 리턴해주면 윈도우 운영체제는 지금 마우스 포인터가 윈도우의 캡션 부분에 와있다고 생각해서 여기서 드래그 작업이 시작될 경우에 윈도우의 위치를 이동시켜 버립니다. 다음 코드는 WM_NCHITTEST 메시지를 처리하여 현재 마우스 좌표가 정해진 영역에 있으면 HTCAPTION을 돌려주는 예제입니다.
+
+case WM_NCHITTEST:
+{
+	// 현재 마우스 위치를 바탕으로 pt 변수를 채운다.
+	POINT pt(LOWORD(lParam), HIWORD(lParam));
+	// 마우스 좌표를 윈도우의 좌측 상단 기준의 좌표로 변경한다.
+	ScreenToClient(hWnd, &pt);
+	// 지정된 사각형 안에 포함되는 점인지 검사한다. 
+	// g_TitleRect는 RECT 타입의 변수로 지정된 사각형의 좌표가 들어있다.
+	if (PtInRect(&g_TitleRect, pt))
+		return HTCAPTION; 
+	break;
+}
+32. 바탕 화면 위의 모든 윈도우를 최소화하거나 모든 최소화 실행 취소
+바탕 화면 위의 모든 윈도우를 최소화하거나 모두 최소화 실행 취소를 프로그램으로 구현하는 방법을 알고 싶습니다.
+태스크바의 빈 공간을 오른쪽 마우스 버튼으로 클릭해보면 팝업 메뉴가 뜨는데 거기에 보면 "모든 창을 최소화(M)"와 "모두 최소화 실행 취소(U)" 명령이 존재하는데 그것을 대신 선택해주는 형식으로 프로그램을 작성해주면 됩니다.
+다음은 "모든 창을 최소화"해주는 루틴입니다. keybd_event API를 이용해서 사용자가 키입력한 것처럼 흉내내줍니다.
+
+void IconizeAllWindow()
+{ 
+	keybd_event(0x5b, 0, 0, 0);
+	keybd_event(77, 0, 0, 0); // 'M' key
+	keybd_event(0x5b, 0, 2, 0);
+}
+	다음은 "모두 최소화 실행 취소" 루틴입니다.
+void RestoreWindowState()
+{
+	keybd_event(0x5b, 0, 0, 0);
+	keybd_event(84, 0, 0, 0); // 'U' key
+	keybd_event(0x5b, 0, 2, 0);
+}
+
+33. VxD 드라이버 호출하기
+Vxd 드라이버를 동적으로 로드해서 호출하고 싶습니다. 어떻게 해야합니까 ?
+먼저 해당하는 VxD 드라이버의 이름과 위치와 호출하려는 작업의 작업 코드명을 알아야 합니다. 드라이버의 로드는 CreateFile API를 이용합니다. VxD 드라이버의 호출은 DeviceIoControl API를 이용합니다. 자세한 설명은 DeviceIoControl API의 레퍼런스를 참고하기 바랍니다.
+DWORD byteReturned;
+// 먼저 VxD 드라이버를 오픈한다.
+hDevice = CreateFile("\\.\NMOUSE.VXD", 0, 0, 0, CREATE_NEW, FILE_FLAG_DELETE_ON_CLOSE, 0);
+if (DeviceIoControl(hDevice, W32_SETHWND, &hWnd, 4, NULL, 0, &byteReturned, NULL))
+{
+	// Success !!!
+}
+
+Vxd 드라이버는 kernel 모드(이를 윈도우에서는 Ring 0라고 부릅니다)에서 동작하기 때문에 모든 하드웨어와 메모리를 바로 접근할 수 있습니다. VxD 드라이버를 작성하려면 DDK를 이용하거나 Numega의 DriverStudio나 KRFTech사의 WinDriver를 이용해야 합니다.
+
+34. Thread 실행시 에러
+CreateThread를 이용해 스레드를 만들어 생성하고 있습니다. 루틴에 이상은 없는 것 같은데 스레드가 많이 생성되어 시간이 좀 지나면 에러가 발생합니다. 이유가 무엇일까요 ?
+정말로 스레드 코드에 별 이상이 없다면 CreateThread API 대신에 beginthread나 beginthreadex를 사용해보기 바랍니다. 자세한 사항은 마이크로소프트의 Knowledge base를 참고하시기 바랍니다.
+
+35. 윈도우 운영체제 종료하기
+프로그램에서 특정 상황이 되면 윈도우 운영체제를 종료하고 싶습니다.
+ExitWindowsEx API를 사용하면 됩니다. 이 함수의 원형은 다음과 같습니다.
+BOOL ExitWindowsEx(UINT uFlags, DWORD dwReserved);
+uFlags로 종료방법을 지정할 수 있습니다. 다음과 같은 값이 가능합니다.
+EWX_LOGOFF 현재 사용자를 로그오프한다. 
+EWX_POWEROFF 시스템을 종료하고 파워오프한다. 파워오프는 이를 지원하는 하드웨어에서만 가능하다. 
+EWX_REBOOT 시스템을 종료하고 시스템을 재시동한다. 
+EWX_SHUTDOWN 시스템을 종료한다. 
+EWX_FORCE WM_QUERYSESSION이나 WM_ENDQUERYSESSION을 보내지 않고 실행중인 모든 프로세스를 종료한다. 위의 네 가지 플래그들과 함께 사용할 수 있다.
+
+36. 디폴트 웹 브라우저 알아내기
+디폴트로 지정된 웹 브라우저를 실행하는 방법을 알고 싶습니다.
+디폴트로 지정된 웹 브라우저는 레지스트리에 자신을 등록합니다. .htm (혹은 .html) 파일의 편집기로 링크도 되지만 http, ftp, gopher 등의 프로토콜 연결 프로그램으로 등록됩니다. 제 생각에 가장 좋은 것은 http 프로토콜의 연결 프로그램을 찾아보는 것으로 생각됩니다. 다음 레지스트리 항목에 보면 연결된 웹 브라우저의 절대 경로를 알 수 있습니다.
+HKEY_CLASSES_ROOThttpshellopencommand
+이 항목의 값을 읽는 방법은 3. 레지스트리 읽기/쓰기를 참고하고 프로그램의 실행에 관한 부분은 19. 특정 프로그램을 실행하고 종료를 기다리기를 참고하거나 ShellExecute API 혹은 WinExec API를 사용하면 됩니다. 이 기능을 수행하는 함수는 다음과 같습니다.
+
+void LaunchDefaultWebBrowser(HWND hWnd)
+{
+	// HKEY_CLASSES_ROOThttpshellopencommand
+	DWORD dwType, cbData;
+	HKEY hSubKey; 
+	long lRet;
+	LPSTR pszString, pszSrcPath;
+	// 키를 오픈한다.
+	if ((lRet = RegOpenKeyEx(HKEY_CLASSES_ROOT, "http\shell\open\command",
+					0, KEY_READ | KEY_QUERY_VALUE , &hSubKey)) == ERROR_SUCCESS)
+	{
+		cbData = 255; // 문자열 값을 읽어올 데이터의 크기를 준다.
+		pszString = (LPSTR)malloc(255);
+		pszSrcPath = pszString;
+		if ((lRet = RegQueryValueEx(hSubKey, "",
+						NULL, &dwType, (unsigned char *)pszString, &cbData)) == ERROR_SUCCESS)
+		{
+			// pszString에 디폴트 웹 브라우저의 경로가 들어온다.
+			// pszString에서 "를 제거한다.
+			RemoveChar(pszString, '"');
+			WinExec(pszString, SW_SHOWNORMAL); 
+		}
+		free(pszString);
+		RegCloseKey(hSubKey);
+	}
+}
+void RemoveChar(LPSTR lpSrc, char chRemove)
+{
+	LPTSTR pstrSource = lpSrc;
+	LPTSTR pstrDest = lpSrc;
+	LPTSTR pstrEnd = lpSrc + strlen(lpSrc);
+	while (pstrSource < pstrEnd)
+	{
+		if (*pstrSource != chRemove)
+		{
+			*pstrDest = *pstrSource;
+			pstrDest = _tcsinc(pstrDest);
+		}
+		pstrSource = _tcsinc(pstrSource);
+	}
+	*pstrDest = '';
+}
+--------------------------------------------------------------------------------
+Copyright 1999? 한기용 Last updated: 11/22/2004 12:45:59 Designed By 한기남
+
+37. 윈도우의 최대/최소 크기 설정
+윈도우의 캡션을 없앴을 경우 윈도우를 최대화했을 때 아래의 Task Bar가 가려져 버리는 현상이 생기는데.. 캡션이 있으면 Task Bar 위로만 최대화되는데 말입니다. 어떻게 해결할 수 있는 방법이 없나 궁금하네요..
+말씀하신 문제를 해결하려면 WM_GETMINMAXINFO 메시지를 처리해야 합니다. 이는 윈도우의 최대 크기 등을 설정하기 위해 사용되는 메시지입니다. 다음과 같이 처리합니다.
+case WM_GETMINMAXINFO :
+{
+	LPMINMAXINFO lpmmi;
+	RECT rc;
+	SystemParametersInfo(SPI_GETWORKAREA, 0, &rc,0);
+	lpmmi = (LPMINMAXINFO)lParam; 
+	lpmmi->ptMaxSize.x = rc.right; 
+	lpmmi->ptMaxSize.y = rc.bottom; 
+	lpmmi->ptMaxPosition.x = 0; 
+	lpmmi->ptMaxPosition.y = 0; 
+	lpmmi->ptMinTrackSize.x = GetSystemMetrics(SM_CXMINTRACK); 
+	lpmmi->ptMinTrackSize.y = GetSystemMetrics(SM_CYMINTRACK); 
+	lpmmi->ptMaxTrackSize.x = GetSystemMetrics(SM_CXMAXTRACK); 
+	lpmmi->ptMaxTrackSize.y = GetSystemMetrics(SM_CYMAXTRACK); 
+	break;
+}
+
+38. Thread에서 Automation 메소드 호출시 에러 발생
+Thread를 생성하고 Automation 메소드를 호출했는데 에러가 발생합니다.
+App 클래스의 InitInstance 함수에서 AfxOleInit를 호출하는 부분을 CoInitializeEx(NULL, COINIT_MULTITHREADED)를 호출하는 것으로 변경하기 바랍니다. 그리고 App 클래스에 ExitInstance 함수를 추가하고 거기서 CoUninitialize를 호출하도록 하면 됩니다. MFC의 AfxOleInit는 기본적으로 STA(Single Threading Apartment) 모델을 사용합니다. Thread에서 자신이 생성하지 않는 COM 객체를 접근할 때는 MTA(Multiple Threading Apartment) 모델을 사용해야 합니다.
+
+39. 최상위 윈도우의 종료 방법
+현재 최상위 윈도우를 찾아서 종료하는 코드를 만들고 싶습니다.
+일단 현재 사용자가 작업 중인 최상위 윈도우의 핸들은 GetForegroundWindow API로 얻어냅니다. 그런데 그 윈도우가 자식 윈도우일 수 있기 때문에 GetParent API를 반복적으로 사용해서 최상위 탑 레벨 윈도우의 핸들을 알아냅니다. 종료하는 방법은 먼저 DestroyWindow를 호출해서 시도해보고 실패하면 시스템 메뉴의 "닫기" 명령을 이용해 처리합니다. 사실 이 것도 실패할 수 있는데 무조건 종료시키고 싶다면 아래 코드에서 주석 처리해 놓은 GetWindowThreadProcessId/Terminate API 부분을 사용하면 됩니다.
+
+HWND hTopWnd = GetForegroundWindow();
+if (hTopWnd == NULL)
+{
+	return;
+}
+while(GetParent(hTopWnd))
+{
+	hTopWnd = GetParent(hTopWnd);
+}
+if (DestroyWindow(hTopWnd) == FALSE)
+{
+	SendMessage(hTopWnd, WM_SYSCOMMAND, SC_CLOSE, NULL);
+	//GetWindowThreadProcessId(hTopWnd, &dwProcessId);
+	//TerminateProcess(dwProcessId);
+} 
+
+40. 인터넷 익스플로러의 위치 경로 알아내기
+인터넷 익스플로러가 설치된 절대 경로를 알고 싶습니다.
+레지스트리의 HKEY_LOCAL_MACHINESoftwareMicrosoftWindowsCurrentVersionApp PathsIExplore.exe 의 기본 값으로 인터넷 익스플로러의 설치 경로가 들어옵니다. 다음 함수를 호출하면 설치 경로를 얻어 줍니다. 인자로 넘어가는 lpPath는 적어도 256바이트 이상의 크기를 갖는 문자 배열이어야 합니다.
+BOOL GetIEPath(LPTSTR lpPath) 
+{
+	long lRet;
+	HKEY hKey;
+	lRet = RegOpenKey(HKEY_LOCAL_MACHINE, "Software\Microsoft\Windows\CurrentVersion\App Paths\IExplore.exe", &hKey);
+	if (lRet == ERROR_SUCCESS)
+	{
+		long cbData = 255;
+		RegQueryValue(hKey, "", lpPath, &cbData);
+		RegCloseKey(hKey);
+	}
+	else
+		return FALSE;
+	return TRUE;
+}
